@@ -1,0 +1,12 @@
+<odoo>
+  <record id="view_move_vendor_bill_inherit_payment_type" model="ir.ui.view">
+    <field name="name">account.move.vendor.bill.payment.type</field>
+    <field name="model">account.move</field>
+    <field name="inherit_id" ref="account.view_move_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='ref']" position="after">
+        <field name="payment_type" invisible="move_type != 'in_invoice'"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
