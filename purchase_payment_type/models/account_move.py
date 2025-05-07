@@ -6,4 +6,4 @@ class AccountMove(models.Model):
     payment_type = fields.Selection([
         ('cash', 'Cash'),
         ('bank', 'Bank'),
-    ], string="Payment Type", required=True)
+    ], string="Payment Type")
