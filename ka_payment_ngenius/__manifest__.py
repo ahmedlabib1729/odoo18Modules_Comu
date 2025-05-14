@@ -1,0 +1,20 @@
+{
+    'name': 'N-Genius Payment Acquirer',
+    'version': '18.0.1.0',
+    'summary': 'Payment Acquirer: N-Genius Implementation',
+    'category': 'Accounting/Payment Acquirers',
+    'license': 'OPL-1',
+    'depends': ['payment'],
+    'data': [
+        'views/payment_acquirer_views.xml',
+        'views/payment_templates.xml',
+        'data/payment_acquirer_data.xml',
+    ],
+    'author': "Keroles ayed",
+    'website': 'https://www.linkedin.com/in/keroles-ayed-19788b14a/',
+    'installable': True,
+    'application': False,
+    'support': 'kerolesayed10@gmail.com',
+    'uninstall_hook': 'uninstall_hook',
+    'post_init_hook': 'post_init_hook',
+}

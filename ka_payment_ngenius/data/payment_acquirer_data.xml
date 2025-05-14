@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <record id="payment_method_ngenius" model="payment.method">
+            <field name="name">Card</field>
+            <field name="code">ngenius</field>
+            <field name="sequence">10</field>
+            <field name="active">False</field>
+            <field name="image" type="base64" file="ka_payment_ngenius/static/description/icon.svg"/>
+            <field name="support_tokenization">False</field>
+            <field name="support_express_checkout">False</field>
+            <field name="support_refund">none</field>
+        </record>
+
+        <record id="ngenius_payment_acquirer" model="payment.provider">
+            <field name="name">ngenius</field>
+            <field name="image_128" type="base64" file="ka_payment_ngenius/static/description/icon.svg"/>
+            <field name="module_id" ref="base.module_ka_payment_ngenius"/>
+            <field name="code">ngenius</field>
+            <field name="support_tokenization">False</field>
+            <field name="allow_tokenization">False</field>
+            <field name="redirect_form_view_id" ref="ngenius_redirect_form"/>
+            <field name="payment_method_ids"
+                   eval="[Command.set([
+                         ref('payment_method_ngenius'),
+                     ])]"/>
+        </record>
+
+    </data>
+</odoo>
