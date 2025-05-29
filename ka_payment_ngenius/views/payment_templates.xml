@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="ngenius_redirect_form">
+        <form t-att-action="api_url" method="GET">
+            <input type="hidden" name="code" t-att-value="code"/>
+        </form>
+    </template>
+
+</odoo>
