@@ -72,6 +72,44 @@ class QuranStudent(models.Model):
         copy=False
     )
 
+    # ============ الحقول الجديدة للملفات ============
+    # 1. صورة/ملف الهوية الإماراتية
+    emirates_id_file = fields.Binary(
+        string='الهوية الإماراتية',
+        help='صورة أو ملف PDF للهوية الإماراتية'
+    )
+    emirates_id_filename = fields.Char(
+        string='اسم ملف الهوية'
+    )
+
+    # 2. صورة/ملف الإقامة
+    residence_file = fields.Binary(
+        string='الإقامة',
+        help='صورة أو ملف PDF للإقامة'
+    )
+    residence_filename = fields.Char(
+        string='اسم ملف الإقامة'
+    )
+
+    # 3. صورة/ملف جواز السفر
+    passport_file = fields.Binary(
+        string='جواز السفر',
+        help='صورة أو ملف PDF لجواز السفر'
+    )
+    passport_filename = fields.Char(
+        string='اسم ملف الجواز'
+    )
+
+    # 4. شهادات أو مستندات أخرى
+    other_document_file = fields.Binary(
+        string='مستندات أخرى',
+        help='شهادات سابقة أو مستندات أخرى'
+    )
+    other_document_filename = fields.Char(
+        string='اسم الملف الإضافي'
+    )
+    # ============ نهاية الحقول الجديدة ============
+
     # Educational Information
     education_level = fields.Selection([
         ('illiterate', 'أمّي'),
@@ -278,7 +316,6 @@ class QuranStudent(models.Model):
     def _compute_attachment_count(self):
         for record in self:
             record.attachment_count = len(record.attachment_ids)
-
 
     def can_enroll_in_program(self, program_type):
         """التحقق من إمكانية التسجيل في نوع البرنامج"""

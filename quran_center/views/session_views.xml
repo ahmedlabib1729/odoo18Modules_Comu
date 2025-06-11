@@ -130,7 +130,7 @@
                         <group>
                             <!-- السماح بالتعديل في حالة draft -->
                             <field name="class_id" readonly="state not in ['draft', 'scheduled']"/>
-                            <field name="class_session_type" readonly="1"/>
+                            <field name="class_session_type"/>
                             <field name="covenant_id" readonly="1"/>
                             <field name="teacher_id" readonly="1"/>
                             <field name="teacher_id2" readonly="1"/>

@@ -108,6 +108,24 @@ class StudentPortal(CustomerPortal):
             ('status', '=', 'present')
         ])
 
+        absent_sessions = request.env['quran.session.attendance'].sudo().search_count([
+            ('student_id', '=', student.id),
+            ('session_id.state', '=', 'completed'),
+            ('status', '=', 'absent')
+        ])
+
+        late_sessions = request.env['quran.session.attendance'].sudo().search_count([
+            ('student_id', '=', student.id),
+            ('session_id.state', '=', 'completed'),
+            ('status', '=', 'late')
+        ])
+
+        excused_sessions = request.env['quran.session.attendance'].sudo().search_count([
+            ('student_id', '=', student.id),
+            ('session_id.state', '=', 'completed'),
+            ('status', '=', 'excused')
+        ])
+
         attendance_rate = (present_sessions / total_sessions * 100) if total_sessions > 0 else 0
 
         # إحصائيات الحفظ
@@ -127,6 +145,9 @@ class StudentPortal(CustomerPortal):
             'attendance_rate': round(attendance_rate, 1),
             'total_sessions': total_sessions,
             'present_sessions': present_sessions,
+            'absent_sessions': absent_sessions,
+            'late_sessions': late_sessions,
+            'excused_sessions': excused_sessions,
             'memorization_progress': memorization_progress,
             'covenant_count': covenant_count,
             'page_name': 'student_dashboard',
@@ -214,7 +235,7 @@ class StudentPortal(CustomerPortal):
             step=10
         )
 
-        # جلب الجلسات
+        # جلب الجلسات مع كل الحقول المطلوبة
         sessions = request.env['quran.session.attendance'].sudo().search(
             domain,
             limit=10,

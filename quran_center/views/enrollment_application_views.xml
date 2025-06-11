@@ -88,6 +88,28 @@
                     </group>
                     
                     <notebook>
+                        <page string="المستندات الرسمية" name="official_documents">
+                            <group>
+                                <group string="الهوية الإماراتية">
+                                    <field name="emirates_id_file" filename="emirates_id_filename" widget="binary"/>
+                                    <field name="emirates_id_filename" invisible="1"/>
+                                </group>
+                                <group string="الإقامة">
+                                    <field name="residence_file" filename="residence_filename" widget="binary"/>
+                                    <field name="residence_filename" invisible="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="جواز السفر">
+                                    <field name="passport_file" filename="passport_filename" widget="binary"/>
+                                    <field name="passport_filename" invisible="1"/>
+                                </group>
+                                <group string="مستندات أخرى">
+                                    <field name="other_document_file" filename="other_document_filename" widget="binary"/>
+                                    <field name="other_document_filename" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
                         <page string="المستندات المرفقة" name="attachments">
                             <field name="attachment_ids" widget="many2many_binary" class="oe_inline">
                                 <list>
@@ -148,7 +170,12 @@
                 <filter string="مقبول" name="approved" domain="[('state', '=', 'approved')]"/>
                 <filter string="مرفوض" name="rejected" domain="[('state', '=', 'rejected')]"/>
                 <separator/>
-
+                <filter string="لديه هوية إماراتية" name="has_emirates_id"
+                        domain="[('emirates_id_file', '!=', False)]"/>
+                <filter string="لديه إقامة" name="has_residence"
+                        domain="[('residence_file', '!=', False)]"/>
+                <filter string="لديه جواز سفر" name="has_passport"
+                        domain="[('passport_file', '!=', False)]"/>
                 <group expand="0" string="تجميع حسب">
                     <filter string="الجنس" name="group_gender" context="{'group_by': 'gender'}"/>
                     <filter string="الجنسية" name="group_nationality" context="{'group_by': 'nationality'}"/>
@@ -172,6 +199,9 @@
                 <field name="memorization_level"/>
                 <field name="state"/>
                 <field name="attachment_count"/>
+                <field name="emirates_id_file"/>
+                <field name="residence_file"/>
+                <field name="passport_file"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click">
@@ -192,6 +222,17 @@
                                 <div t-if="record.attachment_count.raw_value > 0" class="text-muted mt-1">
                                     <i class="fa fa-paperclip"/>
                                     <field name="attachment_count"/> مرفقات
+                                </div>
+                                <div class="mt-2">
+                                    <span t-if="record.emirates_id_file.raw_value" class="badge badge-info" title="هوية إماراتية">
+                                        <i class="fa fa-id-card-o"/>
+                                    </span>
+                                    <span t-if="record.residence_file.raw_value" class="badge badge-info" title="إقامة">
+                                        <i class="fa fa-home"/>
+                                    </span>
+                                    <span t-if="record.passport_file.raw_value" class="badge badge-info" title="جواز سفر">
+                                        <i class="fa fa-passport"/>
+                                    </span>
                                 </div>
                             </div>
                         </div>

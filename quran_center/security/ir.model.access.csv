@@ -22,3 +22,4 @@ access_class_schedule_portal,class.schedule.portal,model_quran_class_schedule,ba
 access_session_portal,session.portal,model_quran_session,base.group_portal,1,0,0,0
 access_session_attendance_portal,session.attendance.portal,model_quran_session_attendance,base.group_portal,1,1,0,0
 access_enrollment_application_portal,enrollment.application.portal,model_quran_enrollment_application,base.group_portal,1,0,0,0
+access_enrollment_link_wizard_user,enrollment.link.wizard.user,model_quran_enrollment_link_wizard,base.group_user,1,1,1,1

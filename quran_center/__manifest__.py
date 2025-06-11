@@ -21,8 +21,11 @@
         #'data/meeting_mail_template.xml',
         'wizard/generate_sessions_wizard_views.xml',
         'wizard/start_meeting_wizard_views.xml',
+        'wizard/enrollment_link_wizard_views.xml',
         'views/enrollment_application_views.xml',
         'views/student_views.xml',
+'views/website_homepage.xml',
+
 
         'views/study_covenant_views.xml',
         'views/quran_class_views.xml',

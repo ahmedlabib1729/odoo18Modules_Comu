@@ -24,10 +24,10 @@ class QuranSession(models.Model):
         ondelete='cascade'
     )
 
-    class_session_type = fields.Selection([
-        ('offline', 'حضورى'),
-        ('Online', 'أون لاين')
-    ], string='نوع الصف', required=True, related='class_id.class_session_type', store=True)
+    class_session_type = fields.Selection(
+        string='نوع الصف',
+        related='class_id.class_session_type',
+        store=True)
 
     covenant_id = fields.Many2one(
         related='class_id.covenant_id',

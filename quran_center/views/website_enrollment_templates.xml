@@ -99,11 +99,41 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label for="id_number" class="form-label required">رقم الهوية</label>
-                                                <input type="text" class="form-control" id="id_number" name="id_number"
-                                                       placeholder="784-XXXX-XXXXXXX-X"
-                                                       t-att-value="id_number" required="required"/>
-                                            </div>
+    <label for="id_number" class="form-label required">رقم الهوية الإماراتية</label>
+    <input type="text"
+           class="form-control"
+           id="id_number"
+           name="id_number"
+           placeholder="784-XXXX-XXXXXXX-X"
+           t-att-value="id_number"
+           required="required"
+           maxlength="18"
+           pattern="^784-\d{4}-\d{7}-\d$"
+           title="يجب إدخال رقم الهوية بالصيغة: 784-XXXX-XXXXXXX-X"
+           autocomplete="off"
+           inputmode="numeric"
+           t-att-class="'form-control' + (' is-invalid' if error.get('id_number') else '')"/>
+    <div class="id-number-progress">
+        <div class="id-number-progress-bar"></div>
+    </div>
+    <div class="form-text id-help-text">
+        <i class="fa fa-info-circle"></i>
+        ابدأ بكتابة 784 وسيتم إضافة الشرطات تلقائياً
+    </div>
+    <t t-if="error.get('id_number')">
+        <div class="invalid-feedback d-block">
+            <i class="fa fa-exclamation-triangle"></i>
+            <t t-foreach="error_message" t-as="msg">
+                <t t-if="'الهوية' in msg">
+                    <t t-esc="msg"/>
+                </t>
+            </t>
+        </div>
+    </t>
+    <div class="invalid-feedback">
+        يرجى إدخال رقم الهوية الإماراتية بالصيغة الصحيحة
+    </div>
+</div>
                                         </div>
 
 
@@ -124,47 +154,89 @@
                                             </div>
                                         </div>
 
-                                        <div class="card mb-4">
+<div class="card mb-4">
     <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">المستندات المرفقة <span class="text-danger">*</span></h4>
+        <h4 class="mb-0">المستندات المطلوبة <span class="text-danger">*</span></h4>
     </div>
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-12 mb-3">
-                <label for="attachments" class="form-label required">رفع المستندات</label>
-                <input type="file" class="form-control" id="attachments" name="attachments"
-                       multiple="multiple" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                       required="required"/>
-                <div class="form-text">
-                    <div class="alert alert-warning mt-2" role="alert">
-                        <strong>تنبيه:</strong> رفع المستندات إجباري. يجب رفع واحد على الأقل من المستندات التالية:
-                    </div>
-                    <ul class="mb-0">
-                        <li><strong class="text-danger">*</strong>  الهوية الإمارتية (إجباري)</li>
-                        <li>الإقامه  (إجباري)</li>
-                        <li>صورة الجواز  (إجباري)</li>
-                        <li>شهادات سابقة إن وجدت </li>
-                    </ul>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="fa fa-info-circle"></i>
-                            الصيغ المسموحة: PDF, JPG, PNG, DOC, DOCX |
-                            الحد الأقصى لحجم الملف: 5 ميجابايت
-                        </small>
-                    </div>
-                </div>
-                <div id="fileList" class="mt-3"></div>
-                <div id="fileError" class="text-danger mt-2" style="display: none;"></div>
+        <div class="alert alert-danger" role="alert">
+            <strong><i class="fa fa-exclamation-circle"></i> مهم جداً:</strong> يجب رفع المستندات الثلاثة الأولى (الهوية، الإقامة، جواز السفر) - المستندات الأخرى اختيارية
+        </div>
 
-                <!-- رسالة خطأ إذا لم يتم رفع ملفات -->
-                <t t-if="error.get('attachments')">
-                    <div class="alert alert-danger mt-2" role="alert">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        يجب رفع مستند واحد على الأقل
-                    </div>
-                </t>
+        <!-- 1. الهوية الإماراتية -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="document-upload-section required-document-field">
+                    <label for="emirates_id_file" class="form-label required">
+                        <i class="fa fa-id-card"></i> الهوية الإماراتية
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="file" class="form-control" id="emirates_id_file" name="emirates_id_file"
+                           accept=".pdf,.jpg,.jpeg,.png" required="required"/>
+                    <div class="form-text">صورة أو PDF للهوية الإماراتية (الحد الأقصى: 5 ميجابايت)</div>
+                    <t t-if="error.get('emirates_id_file')">
+                        <div class="text-danger mt-1">
+                            <i class="fa fa-exclamation-triangle"></i> يجب رفع الهوية الإماراتية
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+            <!-- 2. الإقامة -->
+            <div class="col-md-6">
+                <div class="document-upload-section required-document-field">
+                    <label for="residence_file" class="form-label required">
+                        <i class="fa fa-home"></i> الإقامة
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="file" class="form-control" id="residence_file" name="residence_file"
+                           accept=".pdf,.jpg,.jpeg,.png" required="required"/>
+                    <div class="form-text">صورة أو PDF للإقامة (الحد الأقصى: 5 ميجابايت)</div>
+                    <t t-if="error.get('residence_file')">
+                        <div class="text-danger mt-1">
+                            <i class="fa fa-exclamation-triangle"></i> يجب رفع الإقامة
+                        </div>
+                    </t>
+                </div>
             </div>
         </div>
+
+        <div class="row mb-3">
+            <!-- 3. جواز السفر -->
+            <div class="col-md-6">
+                <div class="document-upload-section required-document-field">
+                    <label for="passport_file" class="form-label required">
+                        <i class="fa fa-passport"></i> جواز السفر
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="file" class="form-control" id="passport_file" name="passport_file"
+                           accept=".pdf,.jpg,.jpeg,.png" required="required"/>
+                    <div class="form-text">صورة أو PDF لجواز السفر (الحد الأقصى: 5 ميجابايت)</div>
+                    <t t-if="error.get('passport_file')">
+                        <div class="text-danger mt-1">
+                            <i class="fa fa-exclamation-triangle"></i> يجب رفع جواز السفر
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+            <!-- 4. مستندات أخرى -->
+            <div class="col-md-6">
+                <div class="document-upload-section">
+                    <label for="other_document_file" class="form-label">
+                        <i class="fa fa-file"></i> مستندات أخرى
+                        <span class="badge badge-secondary">اختياري</span>
+                    </label>
+                    <input type="file" class="form-control" id="other_document_file" name="other_document_file"
+                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"/>
+                    <div class="form-text">شهادات سابقة أو مستندات تعليمية أخرى (الحد الأقصى: 5 ميجابايت)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم المرفقات الإضافية (اختياري) -->
+
+
     </div>
 </div>
 

@@ -76,6 +76,44 @@ class EnrollmentApplication(models.Model):
         help='صورة شخصية للطالب'
     )
 
+    # ============ الحقول الجديدة للملفات ============
+    # 1. صورة/ملف الهوية الإماراتية
+    emirates_id_file = fields.Binary(
+        string='الهوية الإماراتية',
+        help='صورة أو ملف PDF للهوية الإماراتية'
+    )
+    emirates_id_filename = fields.Char(
+        string='اسم ملف الهوية'
+    )
+
+    # 2. صورة/ملف الإقامة
+    residence_file = fields.Binary(
+        string='الإقامة',
+        help='صورة أو ملف PDF للإقامة'
+    )
+    residence_filename = fields.Char(
+        string='اسم ملف الإقامة'
+    )
+
+    # 3. صورة/ملف جواز السفر
+    passport_file = fields.Binary(
+        string='جواز السفر',
+        help='صورة أو ملف PDF لجواز السفر'
+    )
+    passport_filename = fields.Char(
+        string='اسم ملف الجواز'
+    )
+
+    # 4. شهادات أو مستندات أخرى
+    other_document_file = fields.Binary(
+        string='مستندات أخرى',
+        help='شهادات سابقة أو مستندات أخرى'
+    )
+    other_document_filename = fields.Char(
+        string='اسم الملف الإضافي'
+    )
+    # ============ نهاية الحقول الجديدة ============
+
     # Educational Information
     education_level = fields.Selection([
         ('illiterate', 'أمّي'),
@@ -166,7 +204,7 @@ class EnrollmentApplication(models.Model):
 
     notes = fields.Text(string='ملاحظات')
 
-    # المستندات المرفقة
+    # المستندات المرفقة (الحقل الموجود)
     attachment_ids = fields.Many2many(
         'ir.attachment',
         'enrollment_attachment_rel',
@@ -180,6 +218,28 @@ class EnrollmentApplication(models.Model):
         string='عدد المرفقات',
         compute='_compute_attachment_count'
     )
+
+    @api.onchange('id_number')
+    def _onchange_id_number(self):
+        """تنسيق رقم الهوية الإماراتية تلقائياً"""
+        if self.id_number:
+            # إزالة كل شيء عدا الأرقام
+            digits = re.sub(r'[^\d]', '', self.id_number)
+
+            # تطبيق التنسيق إذا كان الرقم يبدأ بـ 784
+            if digits.startswith('784') and len(digits) <= 15:
+                formatted = digits[:3]  # 784
+
+                if len(digits) > 3:
+                    formatted += '-' + digits[3:7]  # XXXX
+
+                if len(digits) > 7:
+                    formatted += '-' + digits[7:14]  # XXXXXXX
+
+                if len(digits) > 14:
+                    formatted += '-' + digits[14:15]  # X
+
+                self.id_number = formatted
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -235,14 +295,40 @@ class EnrollmentApplication(models.Model):
                     raise ValidationError(_('Name in English must contain English letters only'))
 
     @api.constrains('id_number')
+    def _check_emirates_id_format(self):
+        """التحقق من صيغة رقم الهوية الإماراتية"""
+        for record in self:
+            if record.id_number:
+                # إزالة الشرطات للتحقق
+                id_digits = re.sub(r'[^\d]', '', record.id_number)
+
+                # التحقق من أن الرقم يبدأ بـ 784
+                if not id_digits.startswith('784'):
+                    raise ValidationError(_('رقم الهوية الإماراتية يجب أن يبدأ بـ 784'))
+
+                # التحقق من طول الرقم
+                if len(id_digits) != 15:
+                    raise ValidationError(_('رقم الهوية الإماراتية يجب أن يكون 15 رقم'))
+
+                # التحقق من الصيغة الصحيحة
+                pattern = r'^784-\d{4}-\d{7}-\d$'
+                if not re.match(pattern, record.id_number):
+                    raise ValidationError(_('صيغة رقم الهوية غير صحيحة. يجب أن تكون: 784-XXXX-XXXXXXX-X'))
+
+    @api.constrains('id_number')
     def _check_unique_id_number(self):
         for record in self:
-            existing = self.search([
-                ('id_number', '=', record.id_number),
-                ('id', '!=', record.id)
-            ])
-            if existing:
-                raise ValidationError(_('رقم الهوية/الجواز مسجل مسبقاً'))
+            # تنظيف رقم الهوية للمقارنة (إزالة الشرطات)
+            clean_id = re.sub(r'[^\d]', '', record.id_number) if record.id_number else ''
+
+            # البحث عن تكرار مع تنظيف الأرقام
+            domain = [('id', '!=', record.id)]
+            all_records = self.search(domain)
+
+            for other in all_records:
+                other_clean_id = re.sub(r'[^\d]', '', other.id_number) if other.id_number else ''
+                if clean_id and clean_id == other_clean_id:
+                    raise ValidationError(_('رقم الهوية/الجواز مسجل مسبقاً'))
 
     @api.constrains('birth_date')
     def _check_age_limits(self):
@@ -293,7 +379,27 @@ class EnrollmentApplication(models.Model):
         if self.student_id:
             raise ValidationError(_('تم إنشاء طالب لهذا الطلب مسبقاً'))
 
-        # Prepare student data
+        # البحث عن طالب موجود بنفس رقم الهوية
+        existing_student = self.env['quran.student'].search([
+            ('id_number', '=', self.id_number)
+        ], limit=1)
+
+        if existing_student:
+            # فتح ويزرد للربط أو إنشاء طالب جديد
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('طالب موجود بنفس رقم الهوية'),
+                'res_model': 'quran.enrollment.link.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_enrollment_id': self.id,
+                    'default_student_id': existing_student.id,
+                    'default_message': _('تم العثور على طالب موجود بنفس رقم الهوية. ماذا تريد أن تفعل؟')
+                }
+            }
+
+        # إذا لم يكن هناك طالب موجود، أنشئ طالب جديد
         student_vals = {
             'name_ar': self.name_ar,
             'name_en': self.name_en,
@@ -319,20 +425,8 @@ class EnrollmentApplication(models.Model):
         # Link student to application
         self.student_id = student
 
-        # نسخ المرفقات إلى الطالب
-        if self.attachment_ids:
-            # نسخ المرفقات للطالب الجديد
-            new_attachments = []
-            for attachment in self.attachment_ids:
-                new_attachment = attachment.copy({
-                    'res_model': 'quran.student',
-                    'res_id': student.id,
-                })
-                new_attachments.append(new_attachment.id)
-
-            # ربط المرفقات الجديدة بالطالب
-            if new_attachments:
-                student.attachment_ids = [(6, 0, new_attachments)]
+        # نسخ المرفقات والملفات الجديدة إلى الطالب
+        self._copy_attachments_to_student(student)
 
         # Show success message and open student form
         return {
@@ -343,6 +437,22 @@ class EnrollmentApplication(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def _copy_attachments_to_student(self, student):
+        """نسخ المرفقات من الطلب إلى الطالب"""
+        # نسخ المرفقات الموجودة فقط (attachment_ids)
+        # الملفات الثنائية تم نسخها بالفعل في student_vals
+        if self.attachment_ids:
+            new_attachments = []
+            for attachment in self.attachment_ids:
+                new_attachment = attachment.copy({
+                    'res_model': 'quran.student',
+                    'res_id': student.id,
+                })
+                new_attachments.append(new_attachment.id)
+
+            if new_attachments:
+                student.attachment_ids = [(6, 0, new_attachments)]
 
     def action_view_attachments(self):
         """عرض المستندات المرفقة"""
