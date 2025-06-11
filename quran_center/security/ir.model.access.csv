@@ -13,3 +13,12 @@ access_session_user,session.user,model_quran_session,base.group_user,1,1,1,0
 access_session_manager,session.manager,model_quran_session,base.group_system,1,1,1,1
 access_session_attendance_user,session.attendance.user,model_quran_session_attendance,base.group_user,1,1,1,0
 access_session_attendance_manager,session.attendance.manager,model_quran_session_attendance,base.group_system,1,1,1,1
+access_start_meeting_wizard_user,start.meeting.wizard.user,model_quran_session_start_meeting_wizard,base.group_user,1,1,1,1
+
+access_student_portal,student.portal,model_quran_student,base.group_portal,1,0,0,0
+access_study_covenant_portal,study.covenant.portal,model_quran_study_covenant,base.group_portal,1,0,0,0
+access_class_portal,class.portal,model_quran_class,base.group_portal,1,0,0,0
+access_class_schedule_portal,class.schedule.portal,model_quran_class_schedule,base.group_portal,1,0,0,0
+access_session_portal,session.portal,model_quran_session,base.group_portal,1,0,0,0
+access_session_attendance_portal,session.attendance.portal,model_quran_session_attendance,base.group_portal,1,1,0,0
+access_enrollment_application_portal,enrollment.application.portal,model_quran_enrollment_application,base.group_portal,1,0,0,0

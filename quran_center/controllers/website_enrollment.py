@@ -55,6 +55,29 @@ class WebsiteEnrollment(http.Controller):
             _logger.warning(f"Error processing image: {str(e)}")
             # لا نضيف خطأ لأن الصورة اختيارية
 
+        # معالجة المستندات المرفقة
+        attachments_to_create = []
+        try:
+            # الحصول على جميع الملفات المرفوعة
+            files = request.httprequest.files.getlist('attachments')
+            for file in files:
+                if file and file.filename:
+                    # قراءة محتوى الملف
+                    file_content = base64.b64encode(file.read())
+
+                    # تجهيز بيانات المرفق
+                    attachment_vals = {
+                        'name': file.filename,
+                        'datas': file_content,
+                        'type': 'binary',
+                        'res_model': 'quran.enrollment.application',
+                    }
+                    attachments_to_create.append(attachment_vals)
+
+        except Exception as e:
+            _logger.warning(f"Error processing attachments: {str(e)}")
+            # المستندات اختيارية، لذا لا نوقف العملية
+
         # إذا كان هناك أخطاء، أعد عرض النموذج مع الأخطاء
         if error:
             from datetime import date
@@ -81,7 +104,7 @@ class WebsiteEnrollment(http.Controller):
                 'id_number': post.get('id_number'),
                 'education_level': post.get('education_level'),
                 'enrollment_date': post.get('enrollment_date'),
-                'current_memorized_pages': int(post.get('current_memorized_pages', 0)),
+                'current_memorized_pages': int(post.get('current_memorized_pages', 1)),
                 'memorization_level': post.get('memorization_level'),
                 'memorization_start_page': int(post.get('memorization_start_page', 1)),
                 'memorization_end_page': int(post.get('memorization_end_page', 1)),
@@ -95,6 +118,20 @@ class WebsiteEnrollment(http.Controller):
                 enrollment_vals['image'] = image
 
             enrollment = request.env['quran.enrollment.application'].sudo().create(enrollment_vals)
+
+            # إنشاء المرفقات وربطها بالطلب
+            if attachments_to_create:
+                attachment_ids = []
+                for att_vals in attachments_to_create:
+                    att_vals['res_id'] = enrollment.id
+                    attachment = request.env['ir.attachment'].sudo().create(att_vals)
+                    attachment_ids.append(attachment.id)
+
+                # ربط المرفقات بالطلب
+                if attachment_ids:
+                    enrollment.sudo().write({
+                        'attachment_ids': [(6, 0, attachment_ids)]
+                    })
 
             # عرض صفحة النجاح
             return request.render('quran_center.enrollment_success', {

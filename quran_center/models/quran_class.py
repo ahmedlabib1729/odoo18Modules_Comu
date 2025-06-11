@@ -27,6 +27,11 @@ class QuranClass(models.Model):
         ('ladies', 'برامج السيدات')
     ], string='نوع البرنامج', required=True)
 
+    class_session_type = fields.Selection([
+        ('offline', 'حضورى'),
+        ('Online', 'أون لاين')
+    ], string='نوع الصف', required=True)
+
     covenant_id = fields.Many2one(
         'quran.study.covenant',
         string='الميثاق',
@@ -36,9 +41,14 @@ class QuranClass(models.Model):
 
     teacher_id = fields.Many2one(
         'hr.employee',
-        string='المدرس',
-        related='covenant_id.teacher_id',
-        readonly=True,
+        string=' المدرس الأول',
+
+        store=True
+    )
+    teacher_id2 = fields.Many2one(
+        'hr.employee',
+        string='المدرس الثانى',
+
         store=True
     )
 

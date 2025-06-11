@@ -12,12 +12,7 @@ class StudyCovenant(models.Model):
         required=True
     )
 
-    teacher_id = fields.Many2one(
-        'hr.employee',
-        string='المدرس',
-        required=True,
-        domain=[('active', '=', True)]
-    )
+
 
     program_type = fields.Selection([
         ('clubs', 'برامج النوادي'),

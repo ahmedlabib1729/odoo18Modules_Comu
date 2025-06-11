@@ -9,6 +9,7 @@ publicWidget.registry.QuranEnrollmentForm = publicWidget.Widget.extend({
         'change #memorization_start_page': '_onPageChange',
         'change #memorization_end_page': '_onPageChange',
         'change #birth_date': '_validateAge',
+        'change #attachments': '_validateAttachments',
         'submit': '_onSubmit',
     },
 
@@ -45,6 +46,64 @@ publicWidget.registry.QuranEnrollmentForm = publicWidget.Widget.extend({
             } else {
                 this._hideWarning();
             }
+        }
+    },
+
+    _validateAttachments() {
+        const input = this.$('#attachments')[0];
+        const files = input.files;
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png',
+                             'application/msword',
+                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        let hasError = false;
+        let errorMessage = '';
+        const fileList = this.$('#fileList');
+        const fileError = this.$('#fileError');
+
+        // مسح القوائم السابقة
+        fileList.empty();
+        fileError.hide().empty();
+
+        if (files.length > 0) {
+            let fileListHtml = '<strong>الملفات المختارة:</strong><ul class="mb-0">';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                // التحقق من الحجم
+                if (file.size > maxSize) {
+                    hasError = true;
+                    errorMessage += `<li>الملف "${file.name}" يتجاوز الحد الأقصى المسموح (5 ميجابايت)</li>`;
+                }
+
+                // التحقق من النوع
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                const isValidType = allowedTypes.includes(file.type) ||
+                                  ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'].includes(fileExtension);
+
+                if (!isValidType) {
+                    hasError = true;
+                    errorMessage += `<li>نوع الملف "${file.name}" غير مسموح</li>`;
+                } else {
+                    // إضافة الملف للقائمة
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    fileListHtml += `<li><i class="fa fa-file-o"></i> ${file.name} (${fileSize} MB)</li>`;
+                }
+            }
+
+            fileListHtml += '</ul>';
+
+            if (!hasError) {
+                fileList.html(fileListHtml);
+            }
+        }
+
+        if (hasError) {
+            fileError.html('<ul class="mb-0">' + errorMessage + '</ul>').show();
+            input.value = ''; // مسح الملفات
+            fileList.empty();
         }
     },
 

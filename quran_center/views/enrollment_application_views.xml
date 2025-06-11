@@ -21,6 +21,11 @@
                     <field name="has_student" invisible="1"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_attachments" type="object" class="oe_stat_button" icon="fa-file-o">
+                            <field name="attachment_count" widget="statinfo" string="المرفقات"/>
+                        </button>
+                    </div>
                     <field name="image" widget="image" class="oe_avatar" options="{'preview_image': 'image'}"/>
                     <div class="oe_title">
                         <label for="name" string="رقم الطلب"/>
@@ -51,6 +56,15 @@
                         </group>
                     </group>
 
+                    <group string="معلومات الاتصال">
+                        <group>
+                            <field name="email" string="البريد الإلكتروني"/>
+                        </group>
+                        <group>
+                            <field name="phone" string="رقم الهاتف"/>
+                        </group>
+                    </group>
+
                     <group string="البيانات التعليمية">
                         <group>
                             <field name="education_level" string="المرحلة الدراسية"/>
@@ -72,6 +86,22 @@
                             <field name="review_pages" string="عدد صفحات المراجعة"/>
                         </group>
                     </group>
+                    
+                    <notebook>
+                        <page string="المستندات المرفقة" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary" class="oe_inline">
+                                <list>
+                                    <field name="name" string="اسم الملف"/>
+                                    <field name="mimetype" string="النوع"/>
+                                    <field name="file_size" widget="filesize" string="الحجم"/>
+                                    <field name="create_date" string="تاريخ الرفع"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="ملاحظات" name="notes">
+                            <field name="notes" placeholder="أدخل أي ملاحظات إضافية..."/>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
@@ -92,6 +122,7 @@
                 <field name="education_level" string="المرحلة الدراسية"/>
                 <field name="memorization_level" string="مستوى الحفظ"/>
                 <field name="enrollment_date" string="تاريخ الالتحاق"/>
+                <field name="attachment_count" string="المرفقات"/>
                 <field name="state" string="الحالة" widget="badge"
                        decoration-success="state == 'approved'"
                        decoration-warning="state == 'submitted'"
@@ -116,6 +147,8 @@
                 <filter string="مقدم" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="مقبول" name="approved" domain="[('state', '=', 'approved')]"/>
                 <filter string="مرفوض" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+
                 <group expand="0" string="تجميع حسب">
                     <filter string="الجنس" name="group_gender" context="{'group_by': 'gender'}"/>
                     <filter string="الجنسية" name="group_nationality" context="{'group_by': 'nationality'}"/>
@@ -138,6 +171,7 @@
                 <field name="gender"/>
                 <field name="memorization_level"/>
                 <field name="state"/>
+                <field name="attachment_count"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click">
@@ -154,6 +188,10 @@
                                     <span class="badge badge-pill">
                                         <field name="memorization_level"/>
                                     </span>
+                                </div>
+                                <div t-if="record.attachment_count.raw_value > 0" class="text-muted mt-1">
+                                    <i class="fa fa-paperclip"/>
+                                    <field name="attachment_count"/> مرفقات
                                 </div>
                             </div>
                         </div>

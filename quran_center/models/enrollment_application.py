@@ -1,5 +1,3 @@
-
-
 # models/enrollment_application.py
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
@@ -104,9 +102,8 @@ class EnrollmentApplication(models.Model):
     )
 
     memorization_level = fields.Selection([
-        ('beginner', 'مبتدئ'),
-        ('intermediate', 'متوسط'),
-        ('advanced', 'متقدم')
+        ('intermediate', 'حفظ'),
+        ('advanced', 'خاتم للقرآن')
     ], string='مستوى حفظ الطالب', required=True)
 
     memorization_start_page = fields.Integer(
@@ -167,6 +164,23 @@ class EnrollmentApplication(models.Model):
         tracking=True
     )
 
+    notes = fields.Text(string='ملاحظات')
+
+    # المستندات المرفقة
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'enrollment_attachment_rel',
+        'enrollment_id',
+        'attachment_id',
+        string='المستندات المرفقة',
+        help='يمكنك رفع صور الشهادات، شهادة الميلاد، الهوية، إلخ'
+    )
+
+    attachment_count = fields.Integer(
+        string='عدد المرفقات',
+        compute='_compute_attachment_count'
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -196,6 +210,11 @@ class EnrollmentApplication(models.Model):
                 record.total_memorization_pages = record.memorization_end_page - record.memorization_start_page + 1
             else:
                 record.total_memorization_pages = 0
+
+    @api.depends('attachment_ids')
+    def _compute_attachment_count(self):
+        for record in self:
+            record.attachment_count = len(record.attachment_ids)
 
     @api.constrains('name_ar')
     def _check_arabic_name(self):
@@ -258,15 +277,12 @@ class EnrollmentApplication(models.Model):
 
     def action_approve(self):
         self.state = 'approved'
-        # Here you can add logic to create a student record
 
     def action_reject(self):
         self.state = 'rejected'
 
     def action_draft(self):
         self.state = 'draft'
-
-        # في models/enrollment_application.py - تحديث دالة action_create_student
 
     def action_create_student(self):
         """Create a student from approved application"""
@@ -293,8 +309,8 @@ class EnrollmentApplication(models.Model):
             'review_pages': self.review_pages,
             'image': self.image,
             'registration_date': fields.Date.today(),
-            'email': self.email,  # نقل البريد الإلكتروني
-            'phone': self.phone,  # نقل رقم الهاتف
+            'email': self.email,
+            'phone': self.phone,
         }
 
         # Create student
@@ -303,8 +319,20 @@ class EnrollmentApplication(models.Model):
         # Link student to application
         self.student_id = student
 
-        # إنشاء حساب بورتال تلقائياً إذا أردت
-        # student.action_create_portal_user()
+        # نسخ المرفقات إلى الطالب
+        if self.attachment_ids:
+            # نسخ المرفقات للطالب الجديد
+            new_attachments = []
+            for attachment in self.attachment_ids:
+                new_attachment = attachment.copy({
+                    'res_model': 'quran.student',
+                    'res_id': student.id,
+                })
+                new_attachments.append(new_attachment.id)
+
+            # ربط المرفقات الجديدة بالطالب
+            if new_attachments:
+                student.attachment_ids = [(6, 0, new_attachments)]
 
         # Show success message and open student form
         return {
@@ -314,4 +342,19 @@ class EnrollmentApplication(models.Model):
             'res_id': student.id,
             'view_mode': 'form',
             'target': 'current',
+        }
+
+    def action_view_attachments(self):
+        """عرض المستندات المرفقة"""
+        self.ensure_one()
+        return {
+            'name': _('المستندات المرفقة'),
+            'view_mode': 'list,form',
+            'res_model': 'ir.attachment',
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', self.attachment_ids.ids)],
+            'context': {
+                'default_res_model': self._name,
+                'default_res_id': self.id,
+            }
         }

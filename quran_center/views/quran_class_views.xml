@@ -41,9 +41,12 @@
                     <group>
                         <group>
                             <field name="name" string="تفاصيل الصف"/>
+
+                            <field name="class_session_type" widget="radio" options="{'horizontal': true}"/>
                             <field name="program_type" widget="radio" options="{'horizontal': true}"/>
                             <field name="covenant_id" options="{'no_create': True}"/>
-                            <field name="teacher_id" string="المدرس"/>
+                            <field name="teacher_id" string="المدرس الأول"/>
+                            <field name="teacher_id2" string="المدرس الثانى"/>
                         </group>
                         <group>
                             <field name="start_date" string="تاريخ البدء"/>
@@ -121,6 +124,8 @@
             <list string="الصفوف">
                 <field name="code"/>
                 <field name="name"/>
+
+                <field name="class_session_type"/>
                 <field name="program_type"/>
                 <field name="covenant_id"/>
                 <field name="teacher_id"/>

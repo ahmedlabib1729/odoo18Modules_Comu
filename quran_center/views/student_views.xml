@@ -7,12 +7,20 @@
         <field name="arch" type="xml">
             <form string="بطاقة الطالب">
                 <header>
+
+                    <button name="action_create_portal_user"
+                        string="إنشاء حساب بورتال"
+                        type="object"
+                        class="btn-primary"
+                        invisible="user_id"
+                        confirm="هل أنت متأكد من إنشاء حساب بورتال لهذا الطالب؟ سيتم إرسال بيانات الدخول على البريد الإلكتروني المسجل."
+                        icon="fa-user-plus"/>
+
                     <button name="action_activate" string="تفعيل" type="object"
                             class="btn-success" invisible="state == 'active'"/>
                     <button name="action_deactivate" string="إيقاف" type="object"
                             class="btn-warning" invisible="state != 'active'"/>
-                    <button name="action_graduate" string="تخريج" type="object"
-                            class="btn-info" invisible="state != 'active'"/>
+
                     <button name="action_suspend" string="إيقاف مؤقت" type="object"
                             class="btn-danger" invisible="state != 'active'"/>
                     <field name="state" widget="statusbar" statusbar_visible="active,inactive,graduated"/>
@@ -34,12 +42,24 @@
                         <button name="action_view_applications" type="object" class="oe_stat_button" icon="fa-file-text-o">
                             <field name="application_count" widget="statinfo" string="طلبات الالتحاق"/>
                         </button>
-                        <button name="action_view_covenants" type="object" class="oe_stat_button" icon="fa-book">
-                            <field name="covenant_count" widget="statinfo" string="المواثيق"/>
-                        </button>
+
                         <button name="action_view_classes" type="object" class="oe_stat_button" icon="fa-graduation-cap">
                             <field name="class_count" widget="statinfo" string="الصفوف"/>
                         </button>
+
+                        <button class="oe_stat_button" icon="fa-globe"
+                        invisible="not user_id"
+                        type="object"
+                        name="action_open_portal">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text text-success" invisible="not user_id">
+                            <i class="fa fa-check"/> بورتال نشط
+                        </span>
+                        <span class="o_stat_text text-danger" invisible="user_id">
+                            <i class="fa fa-times"/> لا يوجد بورتال
+                        </span>
+                    </div>
+                </button>
 
                     </div>
 
@@ -188,6 +208,9 @@
                             </field>
                         </page>
 
+                        <page string="المستندات المرفقة" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
 
                         <page string="ملاحظات">
                             <field name="notes" string="ملاحظات"/>
@@ -309,6 +332,24 @@
                     </t>
                 </templates>
             </kanban>
+        </field>
+    </record>
+
+    <record id="view_student_form_portal_smart_button" model="ir.ui.view">
+        <field name="name">quran.student.form.portal.smart.button</field>
+        <field name="model">quran.student</field>
+        <field name="inherit_id" ref="quran_center.view_student_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_portal"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-external-link"
+                        invisible="not user_id"
+                        help="فتح البورتال الخاص بالطالب">
+                    <span class="o_stat_text">فتح البورتال</span>
+                </button>
+            </xpath>
         </field>
     </record>
 

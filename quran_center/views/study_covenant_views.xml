@@ -10,7 +10,7 @@
                     <group>
                         <field name="name"/>
                         <field name="program_type"/>
-                        <field name="teacher_id"/>
+
                         <field name="active"/>
                     </group>
                 </sheet>
@@ -26,7 +26,7 @@
             <list string="المواثيق الدراسية">
                 <field name="name"/>
                 <field name="program_type"/>
-                <field name="teacher_id"/>
+
                 <field name="active"/>
             </list>
         </field>
@@ -39,7 +39,7 @@
         <field name="arch" type="xml">
             <search string="بحث المواثيق">
                 <field name="name"/>
-                <field name="teacher_id"/>
+
                 <filter string="نشط" name="active" domain="[('active', '=', True)]"/>
                 <filter string="غير نشط" name="inactive" domain="[('active', '=', False)]"/>
                 <filter string="برامج النوادي" name="clubs_program"
@@ -49,7 +49,7 @@
                 <separator/>
                 <filter string="مؤرشف" name="archived" domain="[('active', '=', False)]"/>
                 <group expand="0" string="تجميع حسب">
-                    <filter string="المدرس" name="group_teacher" context="{'group_by': 'teacher_id'}"/>
+
                     <filter string="نوع البرنامج" name="group_program"
                                                  context="{'group_by': 'program_type'}"/>
                 </group>

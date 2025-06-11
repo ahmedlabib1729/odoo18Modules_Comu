@@ -52,6 +52,10 @@
     font-size: 1.3rem;
     color: #6c757d;
 }
+.card-header .text-danger {
+    font-size: 20px;
+    vertical-align: middle;
+}
 
 /* الحقول */
 .enrollment-form-custom .form-control,

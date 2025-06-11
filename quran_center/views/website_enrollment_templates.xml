@@ -99,11 +99,13 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label for="id_number" class="form-label required">رقم الهوية/الجواز</label>
+                                                <label for="id_number" class="form-label required">رقم الهوية</label>
                                                 <input type="text" class="form-control" id="id_number" name="id_number"
                                                        t-att-value="id_number" required="required"/>
                                             </div>
                                         </div>
+
+
 
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
@@ -120,6 +122,50 @@
                                                        placeholder="05xxxxxxxx"/>
                                             </div>
                                         </div>
+
+                                        <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">المستندات المرفقة <span class="text-danger">*</span></h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label for="attachments" class="form-label required">رفع المستندات</label>
+                <input type="file" class="form-control" id="attachments" name="attachments"
+                       multiple="multiple" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                       required="required"/>
+                <div class="form-text">
+                    <div class="alert alert-warning mt-2" role="alert">
+                        <strong>تنبيه:</strong> رفع المستندات إجباري. يجب رفع واحد على الأقل من المستندات التالية:
+                    </div>
+                    <ul class="mb-0">
+                        <li><strong class="text-danger">*</strong> شهادة الميلاد أو الهوية الوطنية (إجباري)</li>
+                        <li>الشهادات الدراسية</li>
+                        <li>شهادات الحفظ السابقة</li>
+                        <li>أي مستندات أخرى ذات صلة</li>
+                    </ul>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fa fa-info-circle"></i>
+                            الصيغ المسموحة: PDF, JPG, PNG, DOC, DOCX |
+                            الحد الأقصى لحجم الملف: 5 ميجابايت
+                        </small>
+                    </div>
+                </div>
+                <div id="fileList" class="mt-3"></div>
+                <div id="fileError" class="text-danger mt-2" style="display: none;"></div>
+
+                <!-- رسالة خطأ إذا لم يتم رفع ملفات -->
+                <t t-if="error.get('attachments')">
+                    <div class="alert alert-danger mt-2" role="alert">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        يجب رفع مستند واحد على الأقل
+                    </div>
+                </t>
+            </div>
+        </div>
+    </div>
+</div>
 
                                         <!-- حقل الصورة معطل مؤقتاً بسبب تعارض JavaScript
                                         <div class="row">
@@ -172,42 +218,44 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6 mb-3">
+                                            <div class="col-md-6 mb-3" style="display: none;">
                                                 <label for="current_memorized_pages" class="form-label required">عدد صفحات الحفظ عند الالتحاق</label>
                                                 <input type="number" class="form-control" id="current_memorized_pages"
                                                        name="current_memorized_pages" min="0" max="604"
-                                                       t-att-value="current_memorized_pages or '0'" required="required"/>
+                                                       t-att-value="current_memorized_pages or '0'" />
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="memorization_level" class="form-label required">مستوى حفظ الطالب</label>
                                                 <select class="form-select" id="memorization_level" name="memorization_level" required="required">
                                                     <option value="">اختر المستوى</option>
-                                                    <option value="beginner" t-att-selected="memorization_level == 'beginner'">مبتدئ</option>
-                                                    <option value="intermediate" t-att-selected="memorization_level == 'intermediate'">متوسط</option>
-                                                    <option value="advanced" t-att-selected="memorization_level == 'advanced'">متقدم</option>
+                                                    <option value="intermediate" t-att-selected="memorization_level == 'intermediate'">حفظ</option>
+                                                    <option value="advanced" t-att-selected="memorization_level == 'advanced'">خاتم القرآن الكريم</option>
+
                                                 </select>
                                             </div>
-                                        </div>
 
-                                        <div class="row">
-                                            <div class="col-md-4 mb-3">
-                                                <label for="memorization_start_page" class="form-label required">بداية الحفظ (من صفحة)</label>
-                                                <input type="number" class="form-control" id="memorization_start_page"
-                                                       name="memorization_start_page" min="1" max="604"
-                                                       t-att-value="memorization_start_page or '1'" required="required"/>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label for="memorization_end_page" class="form-label required">نهاية الحفظ (إلى صفحة)</label>
-                                                <input type="number" class="form-control" id="memorization_end_page"
-                                                       name="memorization_end_page" min="1" max="604"
-                                                       t-att-value="memorization_end_page or '1'" required="required"/>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-md-6 mb-3">
                                                 <label for="review_pages" class="form-label required">عدد صفحات المراجعة</label>
                                                 <input type="number" class="form-control" id="review_pages"
                                                        name="review_pages" min="0" max="604"
                                                        t-att-value="review_pages or '0'" required="required"/>
                                             </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3" style="display: none;">
+                                                <label for="memorization_start_page" class="form-label required">بداية الحفظ (من صفحة)</label>
+                                                <input type="number" class="form-control" id="memorization_start_page"
+                                                       name="memorization_start_page" min="1" max="604"
+                                                       t-att-value="memorization_start_page or '1'" />
+                                            </div>
+                                            <div class="col-md-4 mb-3" style="display: none;">
+                                                <label for="memorization_end_page" class="form-label required">نهاية الحفظ (إلى صفحة)</label>
+                                                <input type="number" class="form-control" id="memorization_end_page"
+                                                       name="memorization_end_page" min="1" max="604"
+                                                       t-att-value="memorization_end_page or '1'" />
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>

@@ -92,9 +92,8 @@ class QuranStudent(models.Model):
     )
 
     memorization_level = fields.Selection([
-        ('beginner', 'مبتدئ'),
-        ('intermediate', 'متوسط'),
-        ('advanced', 'متقدم')
+        ('intermediate', 'حفظ'),
+        ('advanced', 'خاتم للقرآن')
     ], string='مستوى حفظ الطالب', required=True)
 
     memorization_start_page = fields.Integer(
@@ -166,7 +165,19 @@ class QuranStudent(models.Model):
 
     # Notes
     notes = fields.Text(string='ملاحظات')
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'student_attachment_rel',
+        'student_id',
+        'attachment_id',
+        string='المستندات',
+        help='المستندات الخاصة بالطالب'
+    )
 
+    attachment_count = fields.Integer(
+        string='عدد المستندات',
+        compute='_compute_attachment_count'
+    )
     # Relationship with study covenants
     covenant_ids = fields.Many2many(
         'quran.study.covenant',
@@ -262,6 +273,13 @@ class QuranStudent(models.Model):
         readonly=True
     )
     partner_id = fields.Many2one('res.partner', string='Partner')
+
+    @api.depends('attachment_ids')
+    def _compute_attachment_count(self):
+        for record in self:
+            record.attachment_count = len(record.attachment_ids)
+
+
     def can_enroll_in_program(self, program_type):
         """التحقق من إمكانية التسجيل في نوع البرنامج"""
         if program_type == 'clubs':
@@ -436,7 +454,27 @@ class QuranStudent(models.Model):
 
         # تحديث partner_id إذا لم يكن موجود
         if not self.partner_id:
-            self.partner_id = user.partner_id
+            # إنشاء partner جديد
+            partner_vals = {
+                'name': self.name_ar,
+                'email': self.email,
+                'phone': self.phone,
+                'is_company': False,
+                'customer_rank': 0,
+                'supplier_rank': 0,
+            }
+            partner = self.env['res.partner'].sudo().create(partner_vals)
+            self.partner_id = partner.id
+
+            # تحديث المستخدم بالـ partner
+            user.partner_id = partner.id
+        else:
+            # تحديث بيانات الـ partner الموجود
+            self.partner_id.sudo().write({
+                'email': self.email,
+                'phone': self.phone,
+            })
+            user.partner_id = self.partner_id.id
 
         # إرسال بريد إلكتروني بالبيانات
         self._send_portal_access_email()
@@ -450,6 +488,21 @@ class QuranStudent(models.Model):
                 'message': _('تم إنشاء حساب البورتال بنجاح وإرسال البيانات للطالب'),
                 'type': 'success',
                 'sticky': False,
+            }
+        }
+
+    def action_view_attachments(self):
+        """عرض المستندات المرفقة"""
+        self.ensure_one()
+        return {
+            'name': _('مستندات الطالب'),
+            'view_mode': 'list,form',
+            'res_model': 'ir.attachment',
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', self.attachment_ids.ids)],
+            'context': {
+                'default_res_model': self._name,
+                'default_res_id': self.id,
             }
         }
 
@@ -483,3 +536,114 @@ class QuranStudent(models.Model):
             }
 
             self.env['mail.mail'].sudo().create(mail_values).send()
+
+    def action_open_portal(self):
+        """فتح البورتال في تبويب جديد"""
+        self.ensure_one()
+        if not self.user_id:
+            raise ValidationError(_('لا يوجد حساب بورتال لهذا الطالب'))
+
+        # تسجيل دخول كـ superuser ثم التبديل للمستخدم
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/session/logout?redirect=/web/login?login={self.user_id.login}',
+            'target': 'new',
+        }
+
+    def action_view_portal(self):
+        """عرض البورتال الخاص بالطالب"""
+        self.ensure_one()
+        if not self.user_id:
+            raise ValidationError(_('لا يوجد حساب بورتال لهذا الطالب'))
+
+        base_url = self.get_base_url()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'{base_url}/my/dashboard',
+            'target': 'new',
+        }
+
+    def action_reset_portal_password(self):
+        """إعادة تعيين كلمة مرور البورتال"""
+        self.ensure_one()
+        if not self.user_id:
+            raise ValidationError(_('لا يوجد حساب بورتال لهذا الطالب'))
+
+        # إعادة تعيين كلمة المرور لرقم الهوية
+        self.user_id.sudo().write({
+            'password': self.id_number
+        })
+
+        # إرسال بريد إلكتروني بكلمة المرور الجديدة
+        self._send_password_reset_email()
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('نجح'),
+                'message': _('تم إعادة تعيين كلمة المرور وإرسالها للطالب'),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def action_deactivate_portal(self):
+        """إلغاء تفعيل حساب البورتال"""
+        self.ensure_one()
+        if not self.user_id:
+            raise ValidationError(_('لا يوجد حساب بورتال لهذا الطالب'))
+
+        self.user_id.sudo().write({
+            'active': False
+        })
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('نجح'),
+                'message': _('تم إلغاء تفعيل حساب البورتال'),
+                'type': 'warning',
+                'sticky': False,
+            }
+        }
+
+    def _send_password_reset_email(self):
+        """إرسال بريد إلكتروني بكلمة المرور الجديدة"""
+        self.ensure_one()
+
+        mail_content = f"""
+        <div style="direction: rtl; text-align: right; font-family: Arial, sans-serif;">
+            <p>عزيزي الطالب {self.name_ar}،</p>
+            <p>تم إعادة تعيين كلمة مرور حساب البورتال الخاص بك.</p>
+            <p><strong>بيانات الدخول الجديدة:</strong></p>
+            <ul>
+                <li>البريد الإلكتروني: {self.email}</li>
+                <li>كلمة المرور الجديدة: {self.id_number}</li>
+            </ul>
+            <p>يُنصح بتغيير كلمة المرور بعد الدخول.</p>
+            <p>يمكنك الدخول من خلال الرابط: <a href="{self.get_base_url()}/web/login">دخول البورتال</a></p>
+        </div>
+        """
+
+        mail_values = {
+            'subject': 'إعادة تعيين كلمة مرور البورتال - مركز تحفيظ القرآن',
+            'body_html': mail_content,
+            'email_to': self.email,
+            'email_from': self.env.company.email or 'noreply@quran-center.com',
+        }
+
+        self.env['mail.mail'].sudo().create(mail_values).send()
+
+    @api.onchange('email')
+    def _onchange_email(self):
+        """تحذير عند تغيير البريد الإلكتروني إذا كان هناك حساب بورتال"""
+        if self.user_id and self._origin.email != self.email:
+            return {
+                'warning': {
+                    'title': _('تحذير'),
+                    'message': _(
+                        'تغيير البريد الإلكتروني لن يؤثر على حساب البورتال الموجود. يجب تحديث البريد في حساب المستخدم يدوياً.')
+                }
+            }
