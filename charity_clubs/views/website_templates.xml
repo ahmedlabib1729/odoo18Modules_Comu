@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- قائمة النوادي -->
+    <template id="clubs_list" name="قائمة النوادي">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <!-- Header بسيط -->
+                <div class="page-header">
+                    <div class="container">
+                        <div class="text-center py-5">
+                            <h1>النوادي التعليمية</h1>
+                            <p>اكتشف نوادينا التعليمية المختلفة</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- النوادي -->
+                <div class="container py-5">
+                    <div class="row">
+                        <t t-foreach="clubs" t-as="club">
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="club-card h-100">
+                                    <!-- صورة النادي -->
+                                    <div class="club-image-wrapper">
+                                        <t t-if="club.image">
+                                            <img t-att-src="image_data_uri(club.image)"
+                                                 class="club-image"
+                                                 t-att-alt="club.name"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="default-club-bg">
+                                                <i class="fa fa-graduation-cap"></i>
+                                            </div>
+                                        </t>
+                                    </div>
+
+                                    <!-- محتوى البطاقة -->
+                                    <div class="card-body">
+                                        <span class="programs-badge">
+                                            <t t-esc="club.active_program_count"/> برنامج
+                                        </span>
+
+                                        <h4 class="club-title">
+                                            <a t-att-href="'/clubs/%s' % slug(club)">
+                                                <t t-esc="club.name"/>
+                                            </a>
+                                        </h4>
+
+                                        <p class="club-description">
+                                            <t t-esc="club.description or 'نادي تعليمي ممتع'"/>
+                                        </p>
+
+                                        <div class="club-features">
+                                            <span class="feature-tag">
+                                                <i class="fa fa-users"></i>
+                                                <t t-esc="club.total_registrations"/> طالب
+                                            </span>
+                                        </div>
+
+                                        <a t-att-href="'/clubs/%s' % slug(club)"
+                                           class="btn btn-primary btn-sm">
+                                            عرض البرامج
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- Pagination -->
+                    <t t-if="pager and pager['page_count'] > 1">
+                        <div class="text-center mt-4">
+                            <t t-call="website.pager"/>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- تفاصيل النادي -->
+    <template id="club_details" name="تفاصيل النادي">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <!-- Header النادي -->
+                <div class="club-header">
+                    <div class="container">
+                        <div class="text-center py-5">
+                            <t t-if="club.image">
+                                <img t-att-src="image_data_uri(club.image)"
+                                     class="club-logo"
+                                     t-att-alt="club.name"/>
+                            </t>
+                            <h1><t t-esc="club.name"/></h1>
+                            <t t-if="club.vision">
+                                <p><t t-esc="club.vision"/></p>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- البرامج -->
+                <div class="container py-5">
+                    <h2 class="text-center mb-4">البرامج المتاحة</h2>
+
+                    <div class="row">
+                        <t t-if="not programs">
+                            <div class="col-12 text-center">
+                                <div class="empty-state">
+                                    <p>لا توجد برامج متاحة حالياً</p>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-foreach="programs" t-as="program">
+                            <div class="col-md-6 mb-4">
+                                <div class="program-card h-100">
+                                    <div class="program-card-header">
+                                        <h4><t t-esc="program.name"/></h4>
+                                        <t t-if="program.is_full">
+                                            <span class="badge badge-danger">ممتلئ</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-success">متاح</span>
+                                        </t>
+                                    </div>
+
+                                    <div class="program-card-body">
+                                        <t t-if="program.description">
+                                            <p><t t-esc="program.description"/></p>
+                                        </t>
+
+                                        <!-- معلومات البرنامج -->
+                                        <div class="program-info">
+                                            <div class="info-row">
+                                                <i class="fa fa-calendar"></i>
+                                                <span><t t-esc="program.schedule_display"/></span>
+                                            </div>
+
+                                            <div class="info-row">
+                                                <i class="fa fa-child"></i>
+                                                <span>
+                                                    <t t-esc="program.age_from"/> - <t t-esc="program.age_to"/> سنة
+                                                    <t t-if="program.gender == 'male'"> (أولاد)</t>
+                                                    <t t-if="program.gender == 'female'"> (بنات)</t>
+                                                </span>
+                                            </div>
+
+                                            <div class="info-row">
+                                                <i class="fa fa-users"></i>
+                                                <span>
+                                                    <t t-if="program.is_full">ممتلئ</t>
+                                                    <t t-else="">
+                                                        <t t-esc="program.available_seats"/> مقعد متاح
+                                                    </t>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- السعر -->
+                                        <div class="price-box">
+                                            <span class="price-label">الترم الواحد:</span>
+                                            <span class="price-amount">
+                                                <t t-esc="program.term1_price"/> درهم
+                                            </span>
+                                        </div>
+
+                                        <!-- الأزرار -->
+                                        <div class="program-actions">
+                                            <a t-att-href="'/programs/%s' % slug(program)"
+                                               class="btn btn-info btn-sm">
+                                                التفاصيل
+                                            </a>
+                                            <t t-if="not program.is_full and program.state == 'open'">
+                                                <a t-att-href="'/programs/%s/register' % slug(program)"
+                                                   class="btn btn-success btn-sm">
+                                                    سجل الآن
+                                                </a>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- معلومات الاتصال -->
+                <t t-if="club.phone or club.email">
+                    <div class="contact-section">
+                        <div class="container">
+                            <div class="text-center py-4">
+                                <h3>تواصل معنا</h3>
+                                <div class="contact-info">
+                                    <t t-if="club.phone">
+                                        <span class="contact-item">
+                                            <i class="fa fa-phone"></i>
+                                            <t t-esc="club.phone"/>
+                                        </span>
+                                    </t>
+                                    <t t-if="club.email">
+                                        <span class="contact-item">
+                                            <i class="fa fa-envelope"></i>
+                                            <t t-esc="club.email"/>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- تفاصيل البرنامج -->
+    <template id="program_details" name="تفاصيل البرنامج">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <!-- Breadcrumb -->
+                <div class="breadcrumb-section">
+                    <div class="container">
+                        <nav class="py-3">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="/clubs">النوادي</a>
+                                </li>
+                                <li class="breadcrumb-item">
+                                    <a t-att-href="'/clubs/%s' % slug(club)">
+                                        <t t-esc="club.name"/>
+                                    </a>
+                                </li>
+                                <li class="breadcrumb-item active">
+                                    <t t-esc="program.name"/>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <div class="container py-5">
+                    <div class="row">
+                        <!-- المحتوى الرئيسي -->
+                        <div class="col-lg-8">
+                            <h1><t t-esc="program.name"/></h1>
+
+                            <div class="program-meta mb-4">
+                                <span class="meta-item">
+                                    <i class="fa fa-building"></i>
+                                    <t t-esc="club.name"/>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fa fa-calendar"></i>
+                                    <t t-esc="program.schedule_display"/>
+                                </span>
+                            </div>
+
+                            <!-- الرؤية والأهداف -->
+                            <div class="content-section">
+                                <h3>الرؤية والأهداف</h3>
+                                <p><t t-esc="program.vision"/></p>
+                            </div>
+
+                            <!-- الوصف -->
+                            <t t-if="program.description">
+                                <div class="content-section">
+                                    <h3>وصف البرنامج</h3>
+                                    <p><t t-esc="program.description"/></p>
+                                </div>
+                            </t>
+
+                            <!-- الأسعار -->
+                            <div class="content-section">
+                                <h3>الأسعار</h3>
+                                <table class="table table-simple">
+                                    <tr>
+                                        <td>الترم الأول</td>
+                                        <td><t t-esc="program.term1_price"/> درهم</td>
+                                    </tr>
+                                    <tr>
+                                        <td>الترم الثاني</td>
+                                        <td><t t-esc="program.term2_price"/> درهم</td>
+                                    </tr>
+                                    <tr>
+                                        <td>الترم الثالث</td>
+                                        <td><t t-esc="program.term3_price"/> درهم</td>
+                                    </tr>
+                                    <tr class="total-row">
+                                        <td><strong>السنة الكاملة</strong></td>
+                                        <td><strong><t t-esc="program.total_year_price"/> درهم</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar -->
+                        <div class="col-lg-4">
+                            <div class="sidebar-box">
+                                <h4>معلومات البرنامج</h4>
+
+                                <div class="info-list">
+                                    <div class="info-item">
+                                        <strong>الجدول:</strong>
+                                        <span><t t-esc="program.schedule_display"/></span>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <strong>الفئة العمرية:</strong>
+                                        <span>
+                                            <t t-esc="program.age_from"/> - <t t-esc="program.age_to"/> سنة
+                                            <t t-if="program.gender == 'male'"> (أولاد فقط)</t>
+                                            <t t-if="program.gender == 'female'"> (بنات فقط)</t>
+                                        </span>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <strong>تاريخ البداية:</strong>
+                                        <span t-field="program.start_date" t-options='{"widget": "date"}'/>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <strong>تاريخ النهاية:</strong>
+                                        <span t-field="program.end_date" t-options='{"widget": "date"}'/>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <strong>المقاعد:</strong>
+                                        <span>
+                                            <t t-if="program.is_full">
+                                                <span class="text-danger">ممتلئ</span>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="program.available_seats"/> من <t t-esc="program.max_capacity"/>
+                                            </t>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- زر التسجيل -->
+                                <div class="register-box">
+                                    <t t-if="program.state == 'open' and not program.is_full">
+                                        <a t-att-href="'/programs/%s/register' % slug(program)"
+                                           class="btn btn-success btn-block">
+                                            سجل الآن
+                                        </a>
+                                    </t>
+                                    <t t-elif="program.is_full">
+                                        <button class="btn btn-secondary btn-block" disabled="disabled">
+                                            البرنامج ممتلئ
+                                        </button>
+                                    </t>
+                                    <t t-else="">
+                                        <button class="btn btn-secondary btn-block" disabled="disabled">
+                                            التسجيل مغلق
+                                        </button>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
