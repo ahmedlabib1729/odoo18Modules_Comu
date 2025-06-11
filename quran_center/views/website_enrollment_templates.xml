@@ -101,6 +101,7 @@
                                             <div class="col-md-6 mb-3">
                                                 <label for="id_number" class="form-label required">رقم الهوية</label>
                                                 <input type="text" class="form-control" id="id_number" name="id_number"
+                                                       placeholder="784-XXXX-XXXXXXX-X"
                                                        t-att-value="id_number" required="required"/>
                                             </div>
                                         </div>
@@ -139,10 +140,10 @@
                         <strong>تنبيه:</strong> رفع المستندات إجباري. يجب رفع واحد على الأقل من المستندات التالية:
                     </div>
                     <ul class="mb-0">
-                        <li><strong class="text-danger">*</strong> شهادة الميلاد أو الهوية الوطنية (إجباري)</li>
-                        <li>الشهادات الدراسية</li>
-                        <li>شهادات الحفظ السابقة</li>
-                        <li>أي مستندات أخرى ذات صلة</li>
+                        <li><strong class="text-danger">*</strong>  الهوية الإمارتية (إجباري)</li>
+                        <li>الإقامه  (إجباري)</li>
+                        <li>صورة الجواز  (إجباري)</li>
+                        <li>شهادات سابقة إن وجدت </li>
                     </ul>
                     <div class="mt-2">
                         <small class="text-muted">
@@ -215,10 +216,11 @@
                                 <div class="card mb-4">
                                     <div class="card-header bg-primary text-white">
                                         <h4 class="mb-0">مستوى الحفظ</h4>
+                                        <h6 class="mb-0">عدد صفحات القرآن الكريم في المصحف بالرسم العثماني يبدأ من الصفحة 1 وينتهي عندالصفحة 604</h6>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6 mb-3" style="display: none;">
+                                            <div class="col-md-6 mb-3" >
                                                 <label for="current_memorized_pages" class="form-label required">عدد صفحات الحفظ عند الالتحاق</label>
                                                 <input type="number" class="form-control" id="current_memorized_pages"
                                                        name="current_memorized_pages" min="0" max="604"
@@ -234,22 +236,17 @@
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-6 mb-3">
-                                                <label for="review_pages" class="form-label required">عدد صفحات المراجعة</label>
-                                                <input type="number" class="form-control" id="review_pages"
-                                                       name="review_pages" min="0" max="604"
-                                                       t-att-value="review_pages or '0'" required="required"/>
-                                            </div>
+
                                         </div>
 
                                         <div class="row">
-                                            <div class="col-md-4 mb-3" style="display: none;">
+                                            <div class="col-md-6 mb-3" >
                                                 <label for="memorization_start_page" class="form-label required">بداية الحفظ (من صفحة)</label>
                                                 <input type="number" class="form-control" id="memorization_start_page"
                                                        name="memorization_start_page" min="1" max="604"
                                                        t-att-value="memorization_start_page or '1'" />
                                             </div>
-                                            <div class="col-md-4 mb-3" style="display: none;">
+                                            <div class="col-md-6 mb-3" >
                                                 <label for="memorization_end_page" class="form-label required">نهاية الحفظ (إلى صفحة)</label>
                                                 <input type="number" class="form-control" id="memorization_end_page"
                                                        name="memorization_end_page" min="1" max="604"
@@ -257,6 +254,12 @@
                                             </div>
 
                                         </div>
+                                        <div class="col-md-6 mb-3">
+                                                <label for="review_pages" style="display: none;">عدد صفحات المراجعة</label>
+                                                <input type="number" class="form-control" id="review_pages"
+                                                       name="review_pages" min="0" max="604"
+                                                       t-att-value="review_pages or '0'" style="display: none;"/>
+                                            </div>
                                     </div>
                                 </div>
 
