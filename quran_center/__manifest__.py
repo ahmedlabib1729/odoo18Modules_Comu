@@ -24,7 +24,8 @@
         'wizard/enrollment_link_wizard_views.xml',
         'views/enrollment_application_views.xml',
         'views/student_views.xml',
-'views/website_homepage.xml',
+        'views/website_homepage.xml',
+
 
 
         'views/study_covenant_views.xml',

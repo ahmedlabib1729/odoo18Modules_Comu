@@ -378,6 +378,30 @@ class QuranSession(models.Model):
             }
         }
 
+    def _grant_portal_access_to_meeting(self):
+        """منح صلاحيات الوصول للاجتماع لمستخدمي البورتال"""
+        self.ensure_one()
+
+        if not self.meeting_channel_id:
+            return
+
+        # إضافة جميع الطلاب للقناة
+        portal_partners = []
+        for student in self.enrolled_student_ids:
+            if student.user_id and student.user_id.has_group('base.group_portal'):
+                portal_partners.append(student.user_id.partner_id.id)
+
+        if portal_partners:
+            # إضافة الشركاء للقناة
+            self.meeting_channel_id.write({
+                'channel_partner_ids': [(4, partner_id) for partner_id in portal_partners]
+            })
+
+            # منح صلاحيات القراءة للقناة
+            self.meeting_channel_id.sudo().write({
+                'group_public_id': [(4, self.env.ref('base.group_portal').id)]
+            })
+
     def action_start_meeting_direct(self):
         """بدء الاجتماع مباشرة (تستخدم من الـ wizard)"""
         self.ensure_one()
@@ -397,7 +421,7 @@ class QuranSession(models.Model):
 
         # إرسال إشعار للطلاب
         self._send_meeting_notification('started')
-
+        self._grant_portal_access_to_meeting()
         return True
 
     def action_end_meeting(self):
