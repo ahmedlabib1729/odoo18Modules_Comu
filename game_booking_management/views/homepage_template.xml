@@ -10,7 +10,7 @@
                             <!-- Logo -->
                             <a class="navbar-brand swimming-logo" href="/">
                                 <i class="fa fa-trophy"></i>
-                                <span class="logo-text">الرياضي BLUE OCEAN نادي </span>
+                                <span class="logo-text">الرياضيه BLUE OCEAN أكاديمية </span>
                             </a>
 
                             <!-- Mobile Toggle -->
@@ -104,7 +104,7 @@
         <!-- Homepage Template -->
         <template id="game_booking_homepage" name="Sports Booking Homepage">
             <t t-call="website.layout">
-                <t t-set="title">الرياضي - احجز الآن BLUE OCEAN نادي </t>
+                <t t-set="title">الرياضيه - احجز الآن BLUE OCEAN أكاديمية </t>
 
                 <!-- Hero Section -->
                 <section class="sport-hero-section">
@@ -156,7 +156,7 @@
                 <section id="features" class="features-section py-5">
                     <div class="container">
                         <div class="section-header text-center mb-5">
-                            <h2 class="section-title">؟ BLUE OCEAN لماذا نادى</h2>
+                            <h2 class="section-title">؟ BLUE OCEAN لماذا أكاديمية</h2>
                             <p class="section-subtitle">نوفر لك تجربة رياضية متكاملة تحت سقف واحد</p>
                         </div>
                         <div class="row">
@@ -237,7 +237,7 @@
                     <div class="container">
                         <div class="cta-content text-center">
                             <h2>مستعد للتحدي؟</h2>
-                            <p> وابدأ رحلتك الرياضية BLUE OCEAN إنضم الى نادى</p>
+                            <p> وابدأ رحلتك الرياضيه BLUE OCEAN إنضم الى أكادمية</p>
                             <a href="/game-booking" class="btn btn-cta">
                                 <i class="fa fa-play-circle"></i> ابدأ الحجز
                             </a>
@@ -290,7 +290,7 @@
                             <div class="col-lg-4 mb-4">
                                 <div class="footer-brand">
                                     <i class="fa fa-trophy"></i>
-                                    <h3>الرياضي BLUE OCEAN نادي </h3>
+                                    <h3>الرياضيه BLUE OCEAN أكدايمية </h3>
                                     <p>نادي رياضي متكامل يقدم تجربة رياضية شاملة لجميع أفراد العائلة.</p>
                                 </div>
                             </div>
@@ -319,7 +319,7 @@
                         </div>
                         <hr class="footer-divider"/>
                         <div class="footer-bottom">
-                            <p>© 2025 الرياضي . جميع الحقوق محفوظة BLUE OCEAN نادي .</p>
+                            <p>© 2025 الرياضيه . جميع الحقوق محفوظة BLUE OCEAN أكاديمية  .</p>
                         </div>
                     </div>
                 </footer>
