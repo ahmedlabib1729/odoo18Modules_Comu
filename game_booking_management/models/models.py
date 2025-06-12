@@ -34,10 +34,14 @@ class GameSchedule(models.Model):
     available_slots = fields.Integer(string='الأماكن المتاحة', compute='_compute_available_slots', store=True)
     display_name = fields.Char(string='الاسم', compute='_compute_display_name')
 
-    @api.depends('booking_ids')
+    @api.depends('booking_ids', 'booking_ids.state', 'booking_ids.players_count')
     def _compute_current_players(self):
         for schedule in self:
-            schedule.current_players = len(schedule.booking_ids)
+            total_players = 0
+            for booking in schedule.booking_ids:
+                if booking.state == 'confirmed':
+                    total_players += booking.players_count
+            schedule.current_players = total_players
 
     @api.depends('max_players', 'current_players')
     def _compute_available_slots(self):
@@ -66,6 +70,8 @@ class GameBooking(models.Model):
 
     player_name = fields.Char(string='اسم اللاعب', required=True)
     mobile = fields.Char(string='رقم الجوال', required=True)
+    players_count = fields.Integer(string='عدد المشاركين', required=True, default=1)
+    children_names = fields.Text(string='أسماء الأبناء المشاركين')
     schedule_id = fields.Many2one('game.schedule', string='موعد اللعبة', required=True)
     game_id = fields.Many2one('game.game', string='اللعبة', related='schedule_id.game_id', store=True)
     booking_date = fields.Datetime(string='تاريخ الحجز', default=fields.Datetime.now)
@@ -87,19 +93,33 @@ class GameBooking(models.Model):
             if not re.match(pattern, booking.mobile):
                 raise ValidationError('رقم الجوال غير صحيح. يجب أن يكون بالصيغة: +966XXXXXXXXX')
 
-    @api.constrains('schedule_id')
+    @api.constrains('players_count')
+    def _check_players_count(self):
+        for booking in self:
+            if booking.players_count < 1:
+                raise ValidationError('عدد المشاركين يجب أن يكون 1 على الأقل')
+            if booking.players_count > 3:
+                raise ValidationError('عذراً، الحد الأقصى للمشاركين هو 3 أشخاص إذا أردت الاشتارك بأكثر من لاعب يرجى التواصل على الرقم التالى بالوتس أب 00966590610836')
+
+    @api.constrains('schedule_id', 'players_count')
     def _check_schedule_capacity(self):
         for booking in self:
             if booking.state == 'confirmed':
-                current_bookings = self.search_count([
-                    ('schedule_id', '=', booking.schedule_id.id),
-                    ('state', '=', 'confirmed'),
-                    ('id', '!=', booking.id)
-                ])
-                if current_bookings >= booking.schedule_id.max_players:
+                # حساب إجمالي اللاعبين المحجوزين
+                total_booked = sum(
+                    b.players_count for b in self.search([
+                        ('schedule_id', '=', booking.schedule_id.id),
+                        ('state', '=', 'confirmed'),
+                        ('id', '!=', booking.id)
+                    ])
+                )
+
+                # التحقق من توفر أماكن كافية
+                if total_booked + booking.players_count > booking.schedule_id.max_players:
+                    available = booking.schedule_id.max_players - total_booked
                     raise ValidationError(
-                        f'عذراً، لقد امتلأت جميع الأماكن لهذا الموعد. '
-                        f'العدد الأقصى هو {booking.schedule_id.max_players} لاعبين.'
+                        f'عذراً، لا توجد أماكن كافية. '
+                        f'المتاح فقط {available} أماكن.'
                     )
 
     @api.model
@@ -107,13 +127,21 @@ class GameBooking(models.Model):
         # التحقق من السعة قبل إنشاء الحجز
         if 'schedule_id' in vals and vals.get('state', 'confirmed') == 'confirmed':
             schedule = self.env['game.schedule'].browse(vals['schedule_id'])
-            current_bookings = self.search_count([
-                ('schedule_id', '=', vals['schedule_id']),
-                ('state', '=', 'confirmed')
-            ])
-            if current_bookings >= schedule.max_players:
+            players_count = vals.get('players_count', 1)
+
+            # حساب إجمالي اللاعبين المحجوزين
+            total_booked = sum(
+                b.players_count for b in self.search([
+                    ('schedule_id', '=', vals['schedule_id']),
+                    ('state', '=', 'confirmed')
+                ])
+            )
+
+            if total_booked + players_count > schedule.max_players:
+                available = schedule.max_players - total_booked
                 raise ValidationError(
-                    f'عذراً، لقد امتلأت جميع الأماكن لهذا الموعد. '
-                    f'العدد الأقصى هو {schedule.max_players} لاعبين.'
+                    f'عذراً، لا توجد أماكن كافية. '
+                    f'المتاح فقط {available} أماكن.'
                 )
+
         return super(GameBooking, self).create(vals)

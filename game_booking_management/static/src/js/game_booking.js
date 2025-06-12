@@ -12,6 +12,7 @@ publicWidget.registry.GameBookingForm = publicWidget.Widget.extend({
         'click #prevBtn': '_onPrevClick',
         'submit': '_onFormSubmit',
         'input #mobile': '_onMobileInput',
+        'change #players_count': '_onPlayersCountChange',
     },
 
     start() {
@@ -182,6 +183,14 @@ publicWidget.registry.GameBookingForm = publicWidget.Widget.extend({
         }
     },
 
+    _onPlayersCountChange(ev) {
+        const count = parseInt($(ev.currentTarget).val());
+        if (count > 3) {
+            $(ev.currentTarget).val(3);
+            this._showError('عذراً، الحد الأقصى للمشاركين هو 3 أشخاص');
+        }
+    },
+
     async _onFormSubmit(ev) {
         ev.preventDefault();
 
@@ -198,6 +207,8 @@ publicWidget.registry.GameBookingForm = publicWidget.Widget.extend({
             player_name: this.$('#player_name').val().trim(),
             mobile: this.$('#mobile').val().trim(),
             schedule_id: this.selectedScheduleId,
+            players_count: parseInt(this.$('#players_count').val()),
+            children_names: this.$('#children_names').val().trim(),
         };
 
         try {
@@ -225,6 +236,7 @@ publicWidget.registry.GameBookingForm = publicWidget.Widget.extend({
     _validateForm() {
         const playerName = this.$('#player_name').val().trim();
         const mobile = this.$('#mobile').val().trim();
+        const playersCount = parseInt(this.$('#players_count').val());
 
         if (!playerName) {
             this._showError('يرجى إدخال اسمك');
@@ -243,6 +255,19 @@ publicWidget.registry.GameBookingForm = publicWidget.Widget.extend({
         if (!mobileRegex.test(mobile)) {
             this._showError('رقم الجوال غير صحيح. يجب أن يكون بالصيغة: +966XXXXXXXXX');
             this.$('#mobile').focus();
+            return false;
+        }
+
+        // Validate players count
+        if (!playersCount || playersCount < 1) {
+            this._showError('يجب أن يكون عدد المشاركين 1 على الأقل');
+            this.$('#players_count').focus();
+            return false;
+        }
+
+        if (playersCount > 3) {
+            this._showError('عذراً، الحد الأقصى للمشاركين هو 3 أشخاص إذا أردت الاشتارك بأكثر من لاعب يرجى التواصل على الرقم التالى بالوتس أب 00966590610836');
+            this.$('#players_count').focus();
             return false;
         }
 

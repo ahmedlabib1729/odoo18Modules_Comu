@@ -10,6 +10,7 @@
                 <field name="mobile"/>
                 <field name="game_id"/>
                 <field name="schedule_id"/>
+                <field name="players_count"/>
                 <field name="booking_date"/>
                 <field name="state"/>
             </list>
@@ -34,6 +35,7 @@
                     <group>
                         <group>
                             <field name="mobile" placeholder="+966XXXXXXXXX"/>
+                            <field name="players_count"/>
                             <field name="schedule_id" options="{'no_create': True}"/>
                             <field name="game_id" readonly="1"/>
                         </group>
@@ -41,6 +43,9 @@
                             <field name="booking_date" readonly="1"/>
                             <field name="state"/>
                         </group>
+                    </group>
+                    <group string="أسماء الأبناء المشاركين">
+                        <field name="children_names" nolabel="1" placeholder="اكتب أسماء الأبناء المشاركين (كل اسم في سطر منفصل)"/>
                     </group>
                 </sheet>
             </form>
@@ -56,14 +61,19 @@
                 <field name="player_name"/>
                 <field name="mobile"/>
                 <field name="game_id"/>
+                <field name="children_names"/>
                 <filter string="مؤكد" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter string="ملغي" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
                 <filter string="حجوزات اليوم" name="today" domain="[('booking_date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time.min)), ('booking_date', '&lt;=', datetime.datetime.combine(context_today(), datetime.time.max))]"/>
+                <separator/>
+                <filter string="حجز فردي" name="single" domain="[('players_count', '=', 1)]"/>
+                <filter string="حجز جماعي" name="group" domain="[('players_count', '&gt;', 1)]"/>
                 <group expand="0" string="تجميع حسب">
                     <filter string="اللعبة" name="group_game" context="{'group_by': 'game_id'}"/>
                     <filter string="موعد اللعبة" name="group_schedule" context="{'group_by': 'schedule_id'}"/>
                     <filter string="الحالة" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="عدد المشاركين" name="group_players" context="{'group_by': 'players_count'}"/>
                     <filter string="تاريخ الحجز" name="group_booking_date" context="{'group_by': 'booking_date:day'}"/>
                 </group>
             </search>

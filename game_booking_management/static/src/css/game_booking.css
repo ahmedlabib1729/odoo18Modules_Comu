@@ -2,14 +2,16 @@
 
 /* Variables */
 :root {
-    --primary-color: #7c3aed;
-    --primary-dark: #6d28d9;
-    --secondary-color: #10b981;
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary-color: #06b6d4;
+    --accent-color: #0ea5e9;
+    --success-color: #10b981;
     --danger-color: #ef4444;
-    --dark-color: #1f2937;
-    --light-bg: #f9fafb;
-    --border-color: #e5e7eb;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    --dark-color: #0f172a;
+    --light-bg: #f0f9ff;
+    --border-color: #e0f2fe;
+    --shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
     --card-radius: 20px;
 }
 
@@ -84,9 +86,14 @@
 .booking-card {
     background: white;
     border-radius: var(--card-radius);
-    box-shadow: var(--shadow);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
     padding: 50px;
     position: relative;
+    border: 2px solid transparent;
+    background-image: linear-gradient(white, white),
+                      linear-gradient(135deg, #2563eb, #06b6d4);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
 }
 
 /* Progress Indicator */
@@ -268,18 +275,27 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    position: relative;
 }
 
 .schedule-card:hover {
     border-color: var(--primary-color);
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(124, 58, 237, 0.2);
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.2);
 }
 
 .schedule-card.selected {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border-color: var(--primary-color);
+}
+
+.schedule-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.2rem;
 }
 
 .schedule-date {
@@ -292,16 +308,22 @@
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.schedule-card.selected .schedule-time {
+    color: white;
 }
 
 .schedule-slots {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .schedule-card.full {
     opacity: 0.5;
     cursor: not-allowed;
+    background: #f5f5f5;
 }
 
 .schedule-card.full:hover {
@@ -341,12 +363,28 @@
     outline: none;
     border-color: var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+}
+
+input[type="number"].form-control {
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
 }
 
 .form-text {
     margin-top: 5px;
     font-size: 0.875rem;
+    color: #666;
 }
 
 /* Navigation Buttons */
@@ -370,38 +408,42 @@
 }
 
 .btn-primary {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
+    box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
 }
 
 .btn-secondary {
     background: var(--light-bg);
     color: var(--dark-color);
+    border: 2px solid var(--border-color);
 }
 
 .btn-secondary:hover {
     background: var(--border-color);
+    border-color: var(--primary-color);
 }
 
 .btn-success {
-    background: var(--secondary-color);
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
     color: white;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
 }
 
 .btn-success:hover {
-    background: #059669;
+    background: linear-gradient(135deg, #388e3c, #4caf50);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
 }
 
 .btn-danger {
-    background: var(--danger-color);
+    background: linear-gradient(135deg, var(--danger-color), #f87171);
     color: white;
 }
 
@@ -410,6 +452,7 @@
     border: none;
     border-radius: var(--card-radius);
     overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 .modal-body {
@@ -422,17 +465,32 @@
 }
 
 .success-icon {
-    color: var(--secondary-color);
+    color: #4caf50;
+    animation: checkmark 0.5s ease-out;
+}
+
+@keyframes checkmark {
+    0% { transform: scale(0) rotate(-45deg); }
+    50% { transform: scale(1.2) rotate(-45deg); }
+    100% { transform: scale(1) rotate(0deg); }
 }
 
 .error-icon {
     color: var(--danger-color);
+    animation: shake 0.5s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
 }
 
 .modal h3 {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 15px;
+    color: var(--dark-color);
 }
 
 /* Loading State */
@@ -458,6 +516,12 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Booking Form Section */
+.booking-form-section {
+    background: var(--light-bg);
+    min-height: calc(100vh - 200px);
 }
 
 /* Responsive Design */

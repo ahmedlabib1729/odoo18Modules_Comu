@@ -64,6 +64,8 @@ class GameBookingController(http.Controller):
                 'player_name': post.get('player_name'),
                 'mobile': post.get('mobile'),
                 'schedule_id': int(post.get('schedule_id')),
+                'players_count': int(post.get('players_count', 1)),
+                'children_names': post.get('children_names', ''),
                 'state': 'confirmed',
             }
 

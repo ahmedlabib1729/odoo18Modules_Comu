@@ -9,8 +9,8 @@
                         <div class="container">
                             <!-- Logo -->
                             <a class="navbar-brand swimming-logo" href="/">
-                                <i class="fa fa-swimmer"></i>
-                                <span class="logo-text">نادي السباحة</span>
+                                <i class="fa fa-trophy"></i>
+                                <span class="logo-text">الرياضي BLUE OCEAN نادي </span>
                             </a>
 
                             <!-- Mobile Toggle -->
@@ -46,7 +46,7 @@
                                 <!-- CTA Button -->
                                 <div class="navbar-cta">
                                     <a href="/game-booking" class="btn btn-swimming-cta">
-                                        <i class="fa fa-swimmer"></i> ابدأ رحلتك
+                                        <i class="fa fa-running"></i> ابدأ التدريب
                                     </a>
                                 </div>
 
@@ -87,7 +87,14 @@
                     <!-- Animated Wave Effect -->
                     <div class="header-wave">
                         <svg viewBox="0 0 1440 60" preserveAspectRatio="none">
-                            <path d="M0,20 C150,60 350,0 600,30 C850,60 1050,0 1200,20 C1350,40 1440,30 1440,30 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.1)"></path>
+                            <path d="M0,20 C150,60 350,0 600,30 C850,60 1050,0 1200,20 C1350,40 1440,30 1440,30 L1440,60 L0,60 Z" fill="url(#gradient)"></path>
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.3" />
+                                    <stop offset="50%" style="stop-color:#ffd700;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0.3" />
+                                </linearGradient>
+                            </defs>
                         </svg>
                     </div>
                 </header>
@@ -97,7 +104,7 @@
         <!-- Homepage Template -->
         <template id="game_booking_homepage" name="Sports Booking Homepage">
             <t t-call="website.layout">
-                <t t-set="title">نادي السباحة - احجز الآن</t>
+                <t t-set="title">الرياضي - احجز الآن BLUE OCEAN نادي </t>
 
                 <!-- Hero Section -->
                 <section class="sport-hero-section">
@@ -107,10 +114,10 @@
                             <div class="row">
                                 <div class="col-12 text-center">
                                     <h1 class="hero-main-title animate-title">
-                                        <span class="highlight">اسبح</span> في عالم من المتعة
+                                        <span class="highlight">كن بطلاً</span> في رياضتك المفضلة
                                     </h1>
                                     <p class="hero-description animate-subtitle">
-                                        احجز مكانك في أفضل حمامات السباحة واستمتع بتجربة لا تُنسى
+                                        نادي رياضي متكامل يضم جميع الألعاب - كرة قدم، سباحة، كاراتيه وأكثر
                                     </p>
                                     <div class="hero-buttons animate-buttons">
                                         <a href="/game-booking" class="btn btn-hero-primary">
@@ -122,16 +129,16 @@
                                     </div>
                                     <div class="hero-stats">
                                         <div class="stat-item">
-                                            <span class="stat-number" data-count="1500">0</span>+
-                                            <span class="stat-label">سباح مسجل</span>
+                                            <span class="stat-number" data-count="3000">0</span>+
+                                            <span class="stat-label">لاعب مسجل</span>
                                         </div>
                                         <div class="stat-item">
-                                            <span class="stat-number" data-count="100">0</span>+
-                                            <span class="stat-label">حصة يومياً</span>
+                                            <span class="stat-number" data-count="15">0</span>+
+                                            <span class="stat-label">رياضة مختلفة</span>
                                         </div>
                                         <div class="stat-item">
-                                            <span class="stat-number" data-count="8">0</span>
-                                            <span class="stat-label">حمام سباحة</span>
+                                            <span class="stat-number" data-count="25">0</span>+
+                                            <span class="stat-label">مدرب محترف</span>
                                         </div>
                                     </div>
                                 </div>
@@ -139,8 +146,8 @@
                         </div>
                     </div>
                     <div class="hero-shape">
-                        <svg viewBox="0 0 1440 320">
-                            <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        <svg viewBox="0 0 1440 200" preserveAspectRatio="none">
+                            <path fill="#ffffff" fill-opacity="1" d="M0,100L48,106.7C96,113,192,127,288,130C384,133,480,127,576,110C672,93,768,67,864,73.3C960,80,1056,120,1152,126.7C1248,133,1344,107,1392,93.3L1440,80L1440,200L1392,200C1344,200,1248,200,1152,200C1056,200,960,200,864,200C768,200,672,200,576,200C480,200,384,200,288,200C192,200,96,200,48,200L0,200Z"></path>
                         </svg>
                     </div>
                 </section>
@@ -149,35 +156,35 @@
                 <section id="features" class="features-section py-5">
                     <div class="container">
                         <div class="section-header text-center mb-5">
-                            <h2 class="section-title">لماذا تختار نادينا؟</h2>
-                            <p class="section-subtitle">نوفر لك أفضل تجربة سباحة في المنطقة</p>
+                            <h2 class="section-title">؟ BLUE OCEAN لماذا نادى</h2>
+                            <p class="section-subtitle">نوفر لك تجربة رياضية متكاملة تحت سقف واحد</p>
                         </div>
                         <div class="row">
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="feature-card">
                                     <div class="feature-icon">
-                                        <i class="fa fa-swimmer"></i>
+                                        <i class="fa fa-users"></i>
                                     </div>
-                                    <h3>مدربون محترفون</h3>
-                                    <p>فريق من المدربين المعتمدين لجميع المستويات</p>
+                                    <h3>تنوع رياضي كامل</h3>
+                                    <p>أكثر من 15 رياضة مختلفة تحت سقف واحد</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="feature-card">
                                     <div class="feature-icon">
-                                        <i class="fa fa-water"></i>
+                                        <i class="fa fa-medal"></i>
                                     </div>
-                                    <h3>مياه نظيفة ومعقمة</h3>
-                                    <p>نظام تنقية متطور يضمن نظافة المياه على مدار الساعة</p>
+                                    <h3>مدربون معتمدون</h3>
+                                    <p>نخبة من المدربين المحترفين في جميع الألعاب</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="feature-card">
                                     <div class="feature-icon">
-                                        <i class="fa fa-temperature-low"></i>
+                                        <i class="fa fa-dumbbell"></i>
                                     </div>
-                                    <h3>درجة حرارة مثالية</h3>
-                                    <p>أحواض مدفأة للراحة التامة في جميع الفصول</p>
+                                    <h3>معدات احترافية</h3>
+                                    <p>أحدث المعدات والملاعب بمواصفات عالمية</p>
                                 </div>
                             </div>
                         </div>
@@ -188,38 +195,39 @@
                 <section class="sports-section py-5">
                     <div class="container">
                         <div class="section-header text-center mb-5">
-                            <h2 class="section-title">برامجنا وخدماتنا</h2>
-                            <p class="section-subtitle">اختر البرنامج المناسب لك ولعائلتك</p>
+                            <h2 class="section-title">الرياضات المتاحة</h2>
+                            <p class="section-subtitle">اختر من بين مجموعة واسعة من الألعاب الرياضية</p>
                         </div>
                         <div class="sports-grid">
+                            <div class="sport-item" data-sport="football">
+                                <div class="sport-icon">
+                                    <i class="fa fa-futbol"></i>
+                                </div>
+                                <h4>كرة القدم</h4>
+                                <p>ملاعب عشبية بأحجام مختلفة</p>
+                            </div>
                             <div class="sport-item" data-sport="swimming">
                                 <div class="sport-icon">
                                     <i class="fa fa-swimmer"></i>
                                 </div>
-                                <h4>السباحة الحرة</h4>
-                                <p>أوقات مفتوحة للسباحة والاسترخاء</p>
+                                <h4>السباحة</h4>
+                                <p>أحواض أولمبية وتدريبية</p>
                             </div>
-                            <div class="sport-item" data-sport="training">
+                            <div class="sport-item" data-sport="karate">
                                 <div class="sport-icon">
-                                    <i class="fa fa-graduation-cap"></i>
+                                    <i class="fa fa-fist-raised"></i>
                                 </div>
-                                <h4>دروس السباحة</h4>
-                                <p>تعلم السباحة مع مدربين محترفين</p>
+                                <h4>الكاراتيه</h4>
+                                <p>صالات مجهزة للفنون القتالية</p>
                             </div>
-                            <div class="sport-item" data-sport="aqua">
+                            <div class="sport-item" data-sport="basketball">
                                 <div class="sport-icon">
-                                    <i class="fa fa-heartbeat"></i>
+                                    <i class="fa fa-basketball-ball"></i>
                                 </div>
-                                <h4>الأيروبكس المائي</h4>
-                                <p>تمارين لياقة في الماء</p>
+                                <h4>كرة السلة</h4>
+                                <p>ملاعب داخلية مكيفة</p>
                             </div>
-                            <div class="sport-item" data-sport="kids">
-                                <div class="sport-icon">
-                                    <i class="fa fa-child"></i>
-                                </div>
-                                <h4>برامج الأطفال</h4>
-                                <p>أنشطة ممتعة وآمنة للصغار</p>
-                            </div>
+
                         </div>
                     </div>
                 </section>
@@ -228,8 +236,8 @@
                 <section class="cta-section">
                     <div class="container">
                         <div class="cta-content text-center">
-                            <h2>جاهز للغطس؟</h2>
-                            <p>احجز مكانك الآن واستمتع بتجربة سباحة لا تُنسى</p>
+                            <h2>مستعد للتحدي؟</h2>
+                            <p> وابدأ رحلتك الرياضية BLUE OCEAN إنضم الى نادى</p>
                             <a href="/game-booking" class="btn btn-cta">
                                 <i class="fa fa-play-circle"></i> ابدأ الحجز
                             </a>
@@ -245,21 +253,21 @@
                                 <div class="contact-item">
                                     <i class="fa fa-map-marker-alt"></i>
                                     <h4>موقعنا</h4>
-                                    <p>الشارقة، الإمارات العربية المتحدة</p>
+                                    <p>مدينه خميس مشيط شارع الستين مقابل بنك الراجحي المملكة العربية السعودية </p>
                                 </div>
                             </div>
                             <div class="col-lg-4 mb-4">
                                 <div class="contact-item">
                                     <i class="fa fa-phone"></i>
                                     <h4>اتصل بنا</h4>
-                                    <p dir="ltr">+971 50 123 4567</p>
+                                    <p dir="ltr">+966 59 061 0836</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 mb-4">
                                 <div class="contact-item">
                                     <i class="fa fa-envelope"></i>
                                     <h4>راسلنا</h4>
-                                    <p>info@sportscenter.ae</p>
+                                    <p>BlueOcean.sports10@gmail.com</p>
                                 </div>
                             </div>
                         </div>
@@ -281,9 +289,9 @@
                         <div class="row">
                             <div class="col-lg-4 mb-4">
                                 <div class="footer-brand">
-                                    <i class="fa fa-swimmer"></i>
-                                    <h3>نادي السباحة</h3>
-                                    <p>نسعى لتوفير أفضل تجربة سباحة في المنطقة مع الحفاظ على أعلى معايير الجودة والسلامة.</p>
+                                    <i class="fa fa-trophy"></i>
+                                    <h3>الرياضي BLUE OCEAN نادي </h3>
+                                    <p>نادي رياضي متكامل يقدم تجربة رياضية شاملة لجميع أفراد العائلة.</p>
                                 </div>
                             </div>
                             <div class="col-lg-4 mb-4">
@@ -304,14 +312,14 @@
                                     <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
                                 </div>
                                 <div class="footer-contact mt-3">
-                                    <p><i class="fa fa-phone"></i> +971 50 123 4567</p>
-                                    <p><i class="fa fa-envelope"></i> info@swimmingclub.ae</p>
+                                    <p><i class="fa fa-phone"></i> +966 59 061 0836</p>
+                                    <p><i class="fa fa-envelope"></i> BlueOcean.sports10@gmail.com</p>
                                 </div>
                             </div>
                         </div>
                         <hr class="footer-divider"/>
                         <div class="footer-bottom">
-                            <p>© 2025 نادي السباحة. جميع الحقوق محفوظة.</p>
+                            <p>© 2025 الرياضي . جميع الحقوق محفوظة BLUE OCEAN نادي .</p>
                         </div>
                     </div>
                 </footer>
