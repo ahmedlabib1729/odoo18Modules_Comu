@@ -117,7 +117,7 @@ class CharityRegistrationController(http.Controller):
 
     @http.route('/registration/submit/ladies', type='json', auth='public', website=True, csrf=False)
     def submit_ladies_registration(self, **post):
-        """معالجة تسجيل السيدات مع البحث التلقائي عن العضوة"""
+        """معالجة تسجيل السيدات مع التوجيه المباشر للدفع"""
         try:
             _logger.info(f"Received ladies registration data: {post}")
 
@@ -142,7 +142,7 @@ class CharityRegistrationController(http.Controller):
                     _logger.error(f"Missing required file: {file_field}")
                     return {'success': False, 'error': f'يجب رفع {file_names.get(file_field, file_field)}'}
 
-            # البحث عن عضوة موجودة بناءً على رقم الموبايل
+            # البحث عن عضوة موجودة
             mobile = post.get('mobile')
             whatsapp = post.get('whatsapp')
             department_id = int(post.get('department_id'))
@@ -152,30 +152,6 @@ class CharityRegistrationController(http.Controller):
                 ('mobile', '=', mobile),
                 ('whatsapp', '=', whatsapp)
             ], limit=1)
-
-            # إذا وُجدت عضوة، نتحقق من اشتراكاتها النشطة
-            active_subscription = False
-            subscription_message = None
-
-            if existing_member:
-                _logger.info(f"Found existing member: {existing_member.full_name} - {existing_member.member_number}")
-
-                # البحث عن اشتراك نشط في نفس القسم
-                active_subscription = request.env['charity.member.subscription'].sudo().search([
-                    ('member_id', '=', existing_member.id),
-                    ('department_id', '=', department_id),
-                    ('state', '=', 'active')
-                ], limit=1)
-
-                if active_subscription:
-                    subscription_message = {
-                        'has_active_subscription': True,
-                        'subscription_number': active_subscription.subscription_number,
-                        'end_date': active_subscription.end_date.strftime('%Y-%m-%d'),
-                        'days_remaining': active_subscription.days_remaining,
-                        'programs': [{'name': p.name, 'schedule': p.schedule} for p in active_subscription.program_ids]
-                    }
-                    _logger.info(f"Member has active subscription until {active_subscription.end_date}")
 
             # إعداد بيانات الحجز
             booking_vals = {
@@ -189,7 +165,6 @@ class CharityRegistrationController(http.Controller):
                 'state': 'draft'
             }
 
-            # إذا وُجدت عضوة، نغير نوع الحجز إلى existing
             if existing_member:
                 booking_vals['booking_type'] = 'existing'
                 booking_vals['member_id'] = existing_member.id
@@ -209,62 +184,76 @@ class CharityRegistrationController(http.Controller):
                 booking_vals['residence_file'] = base64.b64decode(post.get('residence_file'))
                 booking_vals['residence_filename'] = post.get('residence_file_name', 'residence.pdf')
 
-            # إضافة البرامج إذا تم اختيارها
+            # إضافة البرامج
             if post.get('program_ids'):
                 program_ids = json.loads(post.get('program_ids'))
                 booking_vals['program_ids'] = [(6, 0, program_ids)]
 
             # إنشاء الحجز
-            _logger.info(f"Creating booking with values: {booking_vals}")
             booking = request.env['charity.booking.registrations'].sudo().create(booking_vals)
             _logger.info(f"Booking created with ID: {booking.id}")
 
-            # تأكيد الحجز تلقائياً
+            # تأكيد الحجز لإنشاء الفاتورة
             try:
                 booking.action_confirm()
-                _logger.info(f"Booking confirmed successfully")
-
-                # إذا تم إنشاء فاتورة، نحصل على معلوماتها
-                if booking.invoice_id:
-                    _logger.info(f"Invoice created with ID: {booking.invoice_id.id}")
-                    invoice_data = {
-                        'invoice_id': booking.invoice_id.id,
-                        'invoice_name': booking.invoice_id.name,
-                        'amount': booking.invoice_id.amount_total,
-                        'access_token': booking.invoice_id._portal_ensure_token()
-                    }
-
-                    return {
-                        'success': True,
-                        'message': 'تم التسجيل بنجاح',
-                        'booking_id': booking.id,
-                        'has_invoice': True,
-                        'invoice': invoice_data,
-                        'member_found': bool(existing_member),
-                        'member_name': existing_member.full_name if existing_member else None,
-                        'active_subscription': subscription_message
-                    }
+                _logger.info(f"Booking confirmed. Invoice created: {bool(booking.invoice_id)}")
             except Exception as e:
                 _logger.error(f"Error confirming booking: {str(e)}")
-                # إذا فشل التأكيد، نرجع نجاح التسجيل فقط
+                # حتى لو فشل التأكيد، نكمل
                 pass
 
-            return {
-                'success': True,
-                'message': 'تم التسجيل بنجاح',
-                'booking_id': booking.id,
-                'has_invoice': False,
-                'member_found': bool(existing_member),
-                'member_name': existing_member.full_name if existing_member else None,
-                'active_subscription': subscription_message
-            }
+            if booking.invoice_id:
+                # استخدام Odoo Payment Link
+                # إنشاء payment link للفاتورة
+                base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+
+                # إنشاء access token إذا لم يكن موجود
+                if not booking.invoice_id.access_token:
+                    booking.invoice_id._portal_ensure_token()
+
+                # رابط الدفع المباشر من Odoo
+                payment_url = f"{base_url}/my/invoices/{booking.invoice_id.id}?access_token={booking.invoice_id.access_token}"
+
+                return {
+                    'success': True,
+                    'message': 'تم التسجيل بنجاح',
+                    'booking_id': booking.id,
+                    'payment_url': payment_url,
+                    'invoice_id': booking.invoice_id.id,
+                    'invoice_name': booking.invoice_id.name,
+                    'amount': booking.invoice_id.amount_total,
+                }
+            else:
+                return {
+                    'success': True,
+                    'message': 'تم التسجيل بنجاح',
+                    'booking_id': booking.id,
+                    'has_invoice': False
+                }
 
         except Exception as e:
             _logger.error(f"Error in ladies registration: {str(e)}")
             return {'success': False, 'error': str(e)}
 
-    @http.route('/registration/invoice/<int:invoice_id>/<string:access_token>', type='http', auth='public',
-                website=True)
+    @http.route('/registration/payment/confirm/<int:booking_id>', type='http', auth='public', website=True)
+    def payment_confirmation(self, booking_id, **kwargs):
+        """صفحة تأكيد الدفع"""
+        booking = request.env['charity.booking.registrations'].sudo().browse(booking_id)
+
+        if not booking.exists():
+            return request.redirect('/registration')
+
+        # التحقق من حالة الدفع
+        if booking.invoice_id and booking.invoice_id.payment_state == 'paid':
+            return request.redirect(f'/registration/success/ladies/{booking.id}')
+
+        values = {
+            'booking': booking,
+            'page_title': 'تأكيد الدفع'
+        }
+
+        return request.render('charity_clubs.payment_confirmation', values)
+
     @http.route('/registration/invoice/<int:invoice_id>/<string:access_token>', type='http', auth='public',
                 website=True)
     def show_invoice(self, invoice_id, access_token, **kwargs):
@@ -293,28 +282,33 @@ class CharityRegistrationController(http.Controller):
                 ('company_id', '=', invoice.company_id.id),
             ])
 
-            if not payment_providers:
-                payment_providers = request.env['payment.provider'].sudo().search([
-                    ('state', 'in', ['enabled', 'test']),
-                ])
-                _logger.warning(
-                    f"No providers found with company filter, trying without: {len(payment_providers)} found")
+            # الحصول على payment tokens للشريك
+            payment_tokens = request.env['payment.token'].sudo().search([
+                ('partner_id', '=', invoice.partner_id.id),
+                ('provider_id', 'in', payment_providers.ids),
+            ])
 
-            # إنشاء payment transaction إذا لم يكن موجود
-            existing_tx = request.env['payment.transaction'].sudo().search([
-                ('invoice_ids', 'in', invoice.id),
-                ('state', 'not in', ['done', 'cancel', 'error'])
-            ], limit=1)
+            # معلومات الدفع
+            payment_context = {
+                'amount': invoice.amount_residual,
+                'currency_id': invoice.currency_id.id,
+                'partner_id': invoice.partner_id.id,
+                'providers': payment_providers,
+                'tokens': payment_tokens,
+                'invoice_id': invoice.id,
+                'access_token': access_token,
+                'landing_route': f'/registration/payment/status?invoice_id={invoice.id}&access_token={access_token}',
+            }
 
             values = {
                 'invoice': invoice,
                 'page_title': f'الفاتورة {invoice.name}',
                 'access_token': access_token,
-                'payment_providers': payment_providers,
-                'existing_transaction': existing_tx,
+                'payment_context': payment_context,
                 'partner': invoice.partner_id,
                 'amount': invoice.amount_residual,
                 'currency': invoice.currency_id,
+                'show_test_mode': True,
             }
 
             return request.render('charity_clubs.invoice_payment_page', values)
@@ -323,147 +317,437 @@ class CharityRegistrationController(http.Controller):
             _logger.error(f"Error showing invoice: {str(e)}")
             return request.redirect('/registration')
 
-    @http.route('/registration/payment/transaction/<int:invoice_id>/<string:access_token>',
-                type='json', auth='public', website=True, csrf=False)
-    def create_payment_transaction(self, invoice_id, access_token, provider_id, **kwargs):
-        """إنشاء معاملة دفع"""
+    @http.route('/registration/payment/transaction', type='json', auth='public', website=True, csrf=False)
+    def create_payment_transaction(self, **kwargs):
+        """إنشاء معاملة دفع جديدة"""
         try:
+            invoice_id = int(kwargs.get('invoice_id'))
+            access_token = kwargs.get('access_token')
+            provider_id = int(kwargs.get('provider_id'))
+
+            # التحقق من الفاتورة
             invoice = request.env['account.move'].sudo().search([
                 ('id', '=', invoice_id),
                 ('access_token', '=', access_token)
             ], limit=1)
 
             if not invoice:
-                return {'success': False, 'error': 'الفاتورة غير موجودة'}
+                return {'error': 'الفاتورة غير موجودة'}
 
-            provider = request.env['payment.provider'].sudo().browse(int(provider_id))
+            # التحقق من provider
+            provider = request.env['payment.provider'].sudo().browse(provider_id)
+            if not provider.exists():
+                return {'error': 'طريقة الدفع غير موجودة'}
+
+            # الحصول على payment method
+            payment_method = request.env['payment.method'].sudo().search([
+                ('code', '=', provider.code),
+                ('active', '=', True)
+            ], limit=1)
+
+            if not payment_method:
+                # إنشاء payment method إذا لم يكن موجود
+                payment_method = request.env['payment.method'].sudo().create({
+                    'name': provider.name,
+                    'code': provider.code,
+                    'active': True,
+                    'provider_ids': [(4, provider.id)]
+                })
+
+            # إنشاء معاملة الدفع
+            tx_values = {
+                'provider_id': provider_id,
+                'payment_method_id': payment_method.id,  # إضافة payment_method_id
+                'amount': invoice.amount_residual,
+                'currency_id': invoice.currency_id.id,
+                'partner_id': invoice.partner_id.id,
+                'invoice_ids': [(6, 0, [invoice.id])],
+                'reference': f"{invoice.name}-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}",
+            }
+
+            tx = request.env['payment.transaction'].sudo().create(tx_values)
+
+            # معالجة حسب نوع provider
+            if provider.code in ['manual', 'demo', 'wire_transfer']:
+                # تأكيد الدفع مباشرة للطرق اليدوية
+                tx._set_done()
+                try:
+                    tx._reconcile_after_done()
+                except:
+                    pass
+
+                # البحث عن الحجز
+                booking = request.env['charity.booking.registrations'].sudo().search([
+                    ('invoice_id', '=', invoice.id)
+                ], limit=1)
+
+                if booking:
+                    booking.write({'state': 'approved'})
+                    if booking.subscription_id:
+                        booking.subscription_id.state = 'active'
+
+                return {
+                    'success': True,
+                    'message': 'تم الدفع بنجاح',
+                    'redirect_url': f'/registration/success/ladies/{booking.id}' if booking else '/registration'
+                }
+            else:
+                # providers أخرى تحتاج معالجة خاصة
+                return {
+                    'success': True,
+                    'transaction_id': tx.id,
+                    'needs_redirect': True
+                }
+
+        except Exception as e:
+            _logger.error(f"Error creating payment transaction: {str(e)}")
+            return {'error': str(e)}
+
+    @http.route('/registration/payment/status', type='http', auth='public', website=True)
+    def payment_status(self, **kwargs):
+        """صفحة حالة الدفع"""
+        try:
+            invoice_id = int(kwargs.get('invoice_id'))
+            access_token = kwargs.get('access_token')
+
+            # التحقق من الفاتورة
+            invoice = request.env['account.move'].sudo().search([
+                ('id', '=', invoice_id),
+                ('access_token', '=', access_token)
+            ], limit=1)
+
+            if not invoice:
+                return request.redirect('/registration')
+
+            # البحث عن آخر معاملة
+            last_tx = request.env['payment.transaction'].sudo().search([
+                ('invoice_ids', 'in', invoice.id)
+            ], order='id desc', limit=1)
+
+            # البحث عن الحجز
+            booking = request.env['charity.booking.registrations'].sudo().search([
+                ('invoice_id', '=', invoice.id)
+            ], limit=1)
+
+            # التحقق من حالة الدفع
+            if invoice.payment_state == 'paid' or (last_tx and last_tx.state == 'done'):
+                # تفعيل الاشتراك إذا لم يكن مفعلاً
+                if booking and booking.subscription_id and booking.subscription_id.state != 'active':
+                    booking.subscription_id.action_activate()
+
+                if booking:
+                    return request.redirect(f'/registration/success/ladies/{booking.id}')
+
+            values = {
+                'invoice': invoice,
+                'transaction': last_tx,
+                'booking': booking,
+                'page_title': 'حالة الدفع'
+            }
+
+            return request.render('charity_clubs.payment_status_page', values)
+
+        except Exception as e:
+            _logger.error(f"Error in payment status: {str(e)}")
+            return request.redirect('/registration')
+
+    @http.route('/registration/payment/process/<int:provider_id>', type='json', auth='public', csrf=False)
+    def process_provider_payment(self, provider_id, **kwargs):
+        """معالجة الدفع حسب provider معين"""
+        try:
+            invoice_id = int(kwargs.get('invoice_id'))
+            access_token = kwargs.get('access_token')
+
+            # التحقق من الصلاحيات
+            invoice = request.env['account.move'].sudo().search([
+                ('id', '=', invoice_id),
+                ('access_token', '=', access_token),
+                ('state', '=', 'posted'),
+                ('payment_state', '!=', 'paid')
+            ], limit=1)
+
+            if not invoice:
+                return {'success': False, 'error': 'الفاتورة غير صالحة أو مدفوعة بالفعل'}
+
+            provider = request.env['payment.provider'].sudo().browse(provider_id)
             if not provider.exists() or provider.state != 'enabled':
                 return {'success': False, 'error': 'طريقة الدفع غير متاحة'}
 
-            # إنشاء معاملة الدفع
+            # إنشاء معاملة دفع
             tx_values = {
                 'provider_id': provider.id,
                 'amount': invoice.amount_residual,
                 'currency_id': invoice.currency_id.id,
                 'partner_id': invoice.partner_id.id,
                 'invoice_ids': [(6, 0, [invoice.id])],
-                'reference': f'{invoice.name}-{fields.Datetime.now().strftime("%Y%m%d%H%M%S")}',
+                'reference': f"{invoice.name}-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}",
             }
 
-            transaction = request.env['payment.transaction'].sudo().create(tx_values)
+            tx = request.env['payment.transaction'].sudo().create(tx_values)
 
-            # الحصول على رابط الدفع
-            payment_link = transaction._get_processing_values()
+            # معالجة حسب نوع provider
+            if provider.code == 'manual':
+                # تأكيد الدفع اليدوي
+                tx._set_done()
+                tx._reconcile_after_done()
 
-            return {
-                'success': True,
-                'transaction_id': transaction.id,
-                'payment_link': payment_link.get('payment_link_url', '#'),
-                'provider_type': provider.code,
-            }
-
-        except Exception as e:
-            _logger.error(f"Error creating payment transaction: {str(e)}")
-            return {'success': False, 'error': str(e)}
-
-    @http.route('/registration/payment/status/<int:transaction_id>',
-                type='json', auth='public', website=True, csrf=False)
-    def check_payment_status(self, transaction_id, **kwargs):
-        """التحقق من حالة الدفع"""
-        try:
-            transaction = request.env['payment.transaction'].sudo().browse(transaction_id)
-            if not transaction.exists():
-                return {'success': False, 'error': 'المعاملة غير موجودة'}
-
-            # التحقق من حالة المعاملة
-            if transaction.state == 'done':
-                # البحث عن الحجز المرتبط
+                # البحث عن الحجز وتفعيله
                 booking = request.env['charity.booking.registrations'].sudo().search([
-                    ('invoice_id', 'in', transaction.invoice_ids.ids)
+                    ('invoice_id', '=', invoice.id)
                 ], limit=1)
+
+                if booking:
+                    booking.write({'state': 'approved'})
+                    if booking.subscription_id:
+                        booking.subscription_id.action_activate()
 
                 return {
                     'success': True,
-                    'state': 'done',
                     'message': 'تم الدفع بنجاح',
                     'redirect_url': f'/registration/success/ladies/{booking.id}' if booking else '/registration'
                 }
-            elif transaction.state == 'pending':
-                return {
-                    'success': True,
-                    'state': 'pending',
-                    'message': 'في انتظار تأكيد الدفع'
-                }
-            elif transaction.state in ['cancel', 'error']:
-                return {
-                    'success': False,
-                    'state': transaction.state,
-                    'message': transaction.state_message or 'فشلت عملية الدفع'
-                }
             else:
+                # الحصول على نموذج الدفع
+                rendering_values = tx._get_specific_rendering_values(provider.code)
+                redirect_form = provider.sudo()._render_redirect_form(tx.reference, rendering_values)
+
                 return {
                     'success': True,
-                    'state': 'processing',
-                    'message': 'جاري معالجة الدفع...'
+                    'transaction_id': tx.id,
+                    'redirect_form': redirect_form,
+                    'provider_code': provider.code
                 }
 
         except Exception as e:
-            _logger.error(f"Error checking payment status: {str(e)}")
+            _logger.error(f"Error processing payment: {str(e)}")
             return {'success': False, 'error': str(e)}
 
-    @http.route('/registration/process-payment', type='json', auth='public', website=True, csrf=False)
-    def process_payment(self, **post):
-        """معالجة الدفع (نموذج مبسط)"""
+    @http.route('/registration/test-payment/process', type='json', auth='public', csrf=False)
+    def process_test_payment(self, **kwargs):
+        """معالج دفع تجريبي بسيط"""
         try:
-            invoice_id = post.get('invoice_id')
-            payment_method = post.get('payment_method')
+            invoice_id = int(kwargs.get('invoice_id'))
+            access_token = kwargs.get('access_token')
 
-            if not invoice_id or not payment_method:
-                return {'success': False, 'error': 'بيانات غير كاملة'}
+            # التحقق من الفاتورة
+            invoice = request.env['account.move'].sudo().search([
+                ('id', '=', invoice_id),
+                ('access_token', '=', access_token),
+                ('state', '=', 'posted'),
+                ('payment_state', '!=', 'paid')
+            ], limit=1)
 
-            invoice = request.env['account.move'].sudo().browse(int(invoice_id))
-            if not invoice.exists():
-                return {'success': False, 'error': 'الفاتورة غير موجودة'}
+            if not invoice:
+                return {'success': False, 'error': 'الفاتورة غير صالحة'}
 
-            # هنا يمكن إضافة معالجة الدفع الفعلية مع بوابة الدفع
-            # للتجربة، سنضع الفاتورة كمدفوعة
-            if payment_method == 'test':
-                # إنشاء دفعة تجريبية
+            # إنشاء journal entry للدفع
+            journal = request.env['account.journal'].sudo().search([
+                ('type', 'in', ['bank', 'cash']),
+                ('company_id', '=', invoice.company_id.id)
+            ], limit=1)
+
+            if journal:
+                # إنشاء payment
                 payment_vals = {
                     'payment_type': 'inbound',
                     'partner_type': 'customer',
                     'partner_id': invoice.partner_id.id,
-                    'amount': invoice.amount_total,
+                    'amount': invoice.amount_residual,
+                    'currency_id': invoice.currency_id.id,
+                    'journal_id': journal.id,
                     'date': fields.Date.today(),
-                    'journal_id': request.env['account.journal'].sudo().search([
-                        ('type', 'in', ['bank', 'cash'])
-                    ], limit=1).id,
-                    'payment_method_line_id': request.env['account.payment.method.line'].sudo().search([
-                        ('payment_method_id.payment_type', '=', 'inbound')
-                    ], limit=1).id,
+
+                    'payment_method_line_id': journal.inbound_payment_method_line_ids[
+                        0].id if journal.inbound_payment_method_line_ids else False,
                 }
 
                 payment = request.env['account.payment'].sudo().create(payment_vals)
                 payment.action_post()
 
                 # ربط الدفعة بالفاتورة
-                invoice.js_assign_outstanding_line(payment.line_ids.id)
+                (payment.move_id + invoice).line_ids.filtered(
+                    lambda line: line.account_id == invoice.line_ids[0].account_id and not line.reconciled
+                ).reconcile()
 
-                # البحث عن الحجز المرتبط
+                _logger.info(f"Test payment created for invoice {invoice.name}")
+
+                # البحث عن الحجز
+                booking = request.env['charity.booking.registrations'].sudo().search([
+                    ('invoice_id', '=', invoice.id)
+                ], limit=1)
+
+                if booking:
+                    booking.write({'state': 'approved'})
+                    if booking.subscription_id:
+                        booking.subscription_id.action_activate()
+
+                return {
+                    'success': True,
+                    'message': 'تم الدفع التجريبي بنجاح',
+                    'redirect_url': f'/registration/success/ladies/{booking.id}' if booking else '/registration'
+                }
+
+            return {'success': False, 'error': 'لا يوجد journal محاسبي'}
+
+        except Exception as e:
+            _logger.error(f"Test payment error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    @http.route('/registration/process-payment', type='json', auth='public', website=True, csrf=False)
+    def process_payment(self, **post):
+        """معالجة الدفع (نموذج مبسط)"""
+        try:
+            _logger.info(f"Process payment called with: {post}")
+
+            invoice_id = post.get('invoice_id')
+            payment_method = post.get('payment_method')
+
+            if not invoice_id:
+                return {'success': False, 'error': 'رقم الفاتورة مطلوب'}
+
+            invoice = request.env['account.move'].sudo().browse(int(invoice_id))
+            if not invoice.exists():
+                return {'success': False, 'error': 'الفاتورة غير موجودة'}
+
+            # التحقق من حالة الدفع
+            if invoice.payment_state == 'paid':
                 booking = request.env['charity.booking.registrations'].sudo().search([
                     ('invoice_id', '=', invoice.id)
                 ], limit=1)
 
                 return {
                     'success': True,
-                    'message': 'تم الدفع بنجاح',
+                    'message': 'الفاتورة مدفوعة بالفعل',
                     'redirect_url': f'/registration/success/ladies/{booking.id}' if booking else '/registration'
                 }
+
+            # للتجربة، سنضع الفاتورة كمدفوعة مباشرة
+            if payment_method == 'test':
+                try:
+                    _logger.info(f"Processing test payment for invoice {invoice.name}")
+
+                    # الطريقة المبسطة - وضع الفاتورة كمدفوعة مباشرة
+                    # نتأكد أن الفاتورة مرحلة
+                    if invoice.state == 'draft':
+                        invoice.action_post()
+
+                    # إنشاء سجل دفعة بسيط (اختياري)
+                    journal = request.env['account.journal'].sudo().search([
+                        ('type', 'in', ['bank', 'cash']),
+                        ('company_id', '=', invoice.company_id.id)
+                    ], limit=1)
+
+                    if journal:
+                        # محاولة إنشاء دفعة
+                        try:
+                            payment_method_id = request.env['account.payment.method'].sudo().search([
+                                ('payment_type', '=', 'inbound'),
+                                ('code', '=', 'manual')
+                            ], limit=1)
+
+                            payment_vals = {
+                                'payment_type': 'inbound',
+                                'partner_type': 'customer',
+                                'partner_id': invoice.partner_id.id,
+                                'amount': invoice.amount_residual,
+                                'currency_id': invoice.currency_id.id,
+                                'journal_id': journal.id,
+
+                            }
+
+                            payment = request.env['account.payment'].sudo().create(payment_vals)
+                            payment.action_post()
+
+                            # محاولة التسوية
+                            try:
+                                # البحث عن السطور المحاسبية للتسوية
+                                payment_line = payment.move_id.line_ids.filtered(
+                                    lambda l: l.account_id.reconcile and l.debit > 0
+                                )
+                                invoice_line = invoice.line_ids.filtered(
+                                    lambda l: l.account_id.reconcile and l.credit > 0 and not l.reconciled
+                                )
+
+                                if payment_line and invoice_line:
+                                    (payment_line | invoice_line).reconcile()
+                                    _logger.info("Payment reconciled successfully")
+                                else:
+                                    # إذا فشلت التسوية، نضع الفاتورة كمدفوعة يدوياً
+                                    invoice._compute_amount()
+
+                            except Exception as e:
+                                _logger.warning(f"Reconciliation failed: {e}, marking invoice as paid manually")
+
+                        except Exception as e:
+                            _logger.warning(f"Payment creation failed: {e}, will mark invoice as paid directly")
+
+                    # تحديث حالة الفاتورة يدوياً إذا لم تكن مدفوعة بعد
+                    if invoice.payment_state != 'paid':
+                        # طريقة بديلة - نسجل دفعة في journal entry مباشرة
+                        invoice.sudo().write({
+                            'payment_state': 'paid',
+                            'amount_residual': 0.0,
+                            'payment_state_before_switch': False,
+                        })
+
+                        # إضافة ملاحظة في الفاتورة
+                        invoice.message_post(
+                            body="تم الدفع عن طريق الدفع التجريبي",
+                            subject="دفعة تجريبية"
+                        )
+
+                    _logger.info(f"Invoice {invoice.name} marked as paid")
+
+                    # البحث عن الحجز المرتبط
+                    booking = request.env['charity.booking.registrations'].sudo().search([
+                        ('invoice_id', '=', invoice.id)
+                    ], limit=1)
+
+                    if booking:
+                        _logger.info(f"Found booking {booking.id}")
+
+                        # تحديث حالة الحجز
+                        booking.write({'state': 'approved'})
+
+                        # تفعيل الاشتراك
+                        if booking.subscription_id and booking.subscription_id.state == 'confirmed':
+                            try:
+                                # التأكد من أن الفاتورة محدثة
+                                booking.invoice_id._compute_payment_state()
+
+                                # تفعيل الاشتراك
+                                booking.subscription_id.action_activate()
+                                _logger.info("Subscription activated successfully")
+                            except Exception as e:
+                                _logger.error(f"Failed to activate subscription: {e}")
+                                # حتى لو فشل تفعيل الاشتراك، نكمل العملية
+                                pass
+
+                        return {
+                            'success': True,
+                            'message': 'تم الدفع بنجاح',
+                            'redirect_url': f'/registration/success/ladies/{booking.id}'
+                        }
+                    else:
+                        _logger.warning("No booking found for this invoice")
+                        return {
+                            'success': True,
+                            'message': 'تم الدفع بنجاح',
+                            'redirect_url': '/registration'
+                        }
+
+                except Exception as e:
+                    _logger.error(f"Error in test payment: {str(e)}")
+                    import traceback
+                    _logger.error(traceback.format_exc())
+                    return {'success': False, 'error': f'خطأ في معالجة الدفع: {str(e)}'}
 
             return {'success': False, 'error': 'طريقة دفع غير مدعومة'}
 
         except Exception as e:
-            _logger.error(f"Error processing payment: {str(e)}")
+            _logger.error(f"General error in process_payment: {str(e)}")
+            import traceback
+            _logger.error(traceback.format_exc())
             return {'success': False, 'error': str(e)}
 
     @http.route('/registration/submit/club', type='json', auth='public', website=True, csrf=False)

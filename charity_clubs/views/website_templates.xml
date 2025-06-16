@@ -658,162 +658,51 @@
             </t>
         </template>
 
-        <!-- صفحة دفع الفاتورة -->
-<template id="invoice_payment_page" name="صفحة دفع الفاتورة">
+
+
+
+        <template id="payment_confirmation" name="تأكيد الدفع">
     <t t-call="website.layout">
-        <t t-set="title">دفع الفاتورة - <t t-esc="invoice.name"/></t>
+        <t t-set="title">تأكيد الدفع</t>
 
         <div class="charity-registration-page">
-            <!-- محتوى صفحة الفاتورة -->
-            <section class="invoice-section py-5">
+            <section class="confirmation-section py-5">
                 <div class="container">
                     <div class="row justify-content-center">
-                        <div class="col-lg-8">
-                            <!-- بطاقة تفاصيل الفاتورة -->
-                            <div class="invoice-card mb-4">
-                                <div class="card">
-                                    <div class="card-header bg-primary text-white">
-                                        <h3 class="mb-0">
-                                            <i class="fa fa-file-text-o me-2"></i>
-                                            تفاصيل الفاتورة
-                                        </h3>
+                        <div class="col-lg-6">
+                            <div class="confirmation-card text-center">
+                                <t t-if="booking.invoice_id.payment_state == 'paid'">
+                                    <!-- تم الدفع -->
+                                    <div class="success-icon text-success mb-4">
+                                        <i class="fa fa-check-circle fa-5x"></i>
                                     </div>
-                                    <div class="card-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <strong>رقم الفاتورة:</strong> <t t-esc="invoice.name"/>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <strong>التاريخ:</strong> <t t-esc="invoice.invoice_date"/>
-                                            </div>
-                                        </div>
-
-                                        <!-- تفاصيل البنود -->
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>الوصف</th>
-                                                        <th class="text-center">الكمية</th>
-                                                        <th class="text-end">السعر</th>
-                                                        <th class="text-end">المجموع</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <t t-foreach="invoice.invoice_line_ids" t-as="line">
-                                                        <tr>
-                                                            <td><t t-esc="line.name"/></td>
-                                                            <td class="text-center"><t t-esc="line.quantity"/></td>
-                                                            <td class="text-end"><t t-esc="line.price_unit"/> ريال</td>
-                                                            <td class="text-end"><t t-esc="line.price_subtotal"/> ريال</td>
-                                                        </tr>
-                                                    </t>
-                                                </tbody>
-                                                <tfoot>
-                                                    <tr class="table-active">
-                                                        <th colspan="3" class="text-end">المجموع الكلي:</th>
-                                                        <th class="text-end text-primary">
-                                                            <t t-esc="invoice.amount_total"/> ريال
-                                        </th>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
+                                    <h2>تم الدفع بنجاح!</h2>
+                                    <p class="lead">شكراً لك، تم استلام دفعتك بنجاح</p>
+                                    <a t-attf-href="/registration/success/ladies/#{booking.id}"
+                                       class="btn btn-success btn-lg mt-4">
+                                        متابعة
+                                    </a>
+                                </t>
+                                <t t-else="">
+                                    <!-- في انتظار الدفع -->
+                                    <div class="waiting-icon text-warning mb-4">
+                                        <i class="fa fa-clock-o fa-5x"></i>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- بطاقة طرق الدفع -->
-                            <div class="payment-methods-card">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h3 class="mb-0">
+                                    <h2>في انتظار الدفع</h2>
+                                    <p class="lead">لم يتم استلام الدفع بعد</p>
+                                    <div class="mt-4">
+                                        <a t-attf-href="/my/invoices/#{booking.invoice_id.id}?access_token=#{booking.invoice_id.access_token}"
+                                           class="btn btn-primary btn-lg">
                                             <i class="fa fa-credit-card me-2"></i>
-                                            اختر طريقة الدفع
-                                        </h3>
+                                            الدفع الآن
+                                        </a>
                                     </div>
-                                    <div class="card-body">
-                                        <!-- طرق الدفع المتاحة من النظام -->
-                                           <t t-if="payment_providers">
-                                                <t t-foreach="payment_providers" t-as="provider">
-                                                    <div class="form-check mb-3 payment-provider-option">
-                                                        <input class="form-check-input"
-                                                               type="radio"
-                                                               name="payment_provider"
-                                                               t-att-id="'provider_' + str(provider.id)"
-                                                               t-att-value="provider.id"
-                                                               t-att-data-provider-code="provider.code"/>
-                                                        <label class="form-check-label d-flex align-items-center"
-                                                               t-att-for="'provider_' + str(provider.id)">
-                                                            <t t-if="provider.image_128">
-                                                                <img t-att-src="image_data_uri(provider.image_128)"
-                                                                     class="me-2"
-                                                                     style="height: 30px;"
-                                                                     onerror="this.style.display='none'"/>
-                                                            </t>
-                                                            <span t-esc="provider.display_name or provider.name"/>
-                                                            <t t-if="provider.state == 'test'">
-                                                                <span class="badge bg-warning ms-2">تجريبي</span>
-                                                            </t>
-                                                        </label>
-                                                        <t t-if="provider.pre_msg">
-                                                            <div class="text-muted small mt-1 ms-4" t-raw="provider.pre_msg"/>
-                                                        </t>
-                                                    </div>
-                                                </t>
-                                            </t>
-                                            <t t-else="">
-                                                <div class="alert alert-warning">
-                                                    <i class="fa fa-exclamation-triangle"></i>
-                                                    لا توجد طرق دفع متاحة حالياً. يرجى التواصل مع الإدارة.
-                                                </div>
-                                            </t>
-                                        </div>
-
-                                        <t t-if="payment_providers">
-                                            <div class="text-center mt-4">
-                                                <button id="processPayment"
-                                                        class="btn btn-success btn-lg px-5"
-                                                        t-att-data-invoice-id="invoice.id"
-                                                        t-att-data-access-token="access_token"
-                                                        t-att-data-amount="amount"
-                                                        t-att-data-currency-id="currency.id">
-                                                    <i class="fa fa-lock me-2"></i>
-                                                    إتمام الدفع الآن
-                                                </button>
-                                            </div>
-                                        </t>
-
-                                        <!-- معلومات إضافية -->
-                                        <div class="payment-security-info mt-4 text-center text-muted">
-                                            <i class="fa fa-shield"></i>
-                                            جميع المعاملات آمنة ومشفرة
-                                        </div>
+                                    <div class="mt-3">
+                                        <a href="/registration" class="btn btn-outline-secondary">
+                                            العودة للتسجيل
+                                        </a>
                                     </div>
-                                </div>
-
-
-                            <!-- Modal لعرض نافذة الدفع -->
-                            <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">معالجة الدفع</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div id="paymentProcessing" class="text-center py-4">
-                                                <div class="spinner-border text-primary mb-3" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </div>
-                                                <p>جاري تحضير صفحة الدفع...</p>
-                                            </div>
-                                            <div id="paymentFrame" style="display: none;">
-                                                <!-- سيتم إدراج إطار الدفع هنا -->
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                </t>
                             </div>
                         </div>
                     </div>
@@ -822,6 +711,10 @@
         </div>
     </t>
 </template>
+
+
+
+
 
         <!-- صفحة النجاح -->
         <template id="registration_success" name="تم التسجيل بنجاح">

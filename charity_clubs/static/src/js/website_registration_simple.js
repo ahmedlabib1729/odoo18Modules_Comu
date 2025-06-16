@@ -140,10 +140,7 @@ publicWidget.registry.CharityLadiesRegistration = publicWidget.Widget.extend({
                 id: Math.floor(Math.random() * 1000000000)
             };
 
-            // طباعة البيانات للتأكد
-            console.log('JSON-RPC Data to be sent:', jsonRpcData);
-
-            // إرسال البيانات باستخدام jQuery AJAX
+            // إرسال البيانات
             $.ajax({
                 url: '/registration/submit/ladies',
                 type: 'POST',
@@ -153,14 +150,12 @@ publicWidget.registry.CharityLadiesRegistration = publicWidget.Widget.extend({
                 success: (response) => {
                     console.log('Response received:', response);
 
-                    // التحقق من وجود خطأ في الاستجابة
                     if (response.error) {
                         console.error('Server error:', response.error);
                         this._showMessage('error', 'خطأ', response.error.message || response.error.data?.message || 'حدث خطأ في الخادم');
                         return;
                     }
 
-                    // معالجة النتيجة
                     const result = response.result;
                     this._handleRegistrationResponse(result);
                 },
@@ -168,7 +163,6 @@ publicWidget.registry.CharityLadiesRegistration = publicWidget.Widget.extend({
                     console.error('AJAX Error:', error);
                     console.error('Response:', xhr.responseText);
 
-                    // محاولة استخراج رسالة الخطأ
                     let errorMessage = 'حدث خطأ في الاتصال';
                     try {
                         const errorResponse = JSON.parse(xhr.responseText);
@@ -197,37 +191,57 @@ publicWidget.registry.CharityLadiesRegistration = publicWidget.Widget.extend({
             return;
         }
 
-        // عضوة موجودة مع اشتراك نشط
-        if (response.member_found && response.active_subscription?.has_active_subscription) {
-            const subscription = response.active_subscription;
+        console.log('Registration response:', response);
 
-            if (confirm(`مرحباً ${response.member_name}!\n\nلديك اشتراك نشط ينتهي في ${subscription.end_date}\nهل تريدين الاستمرار؟`)) {
-                this._redirectAfterSuccess(response);
-            } else {
-                window.location.reload();
+        // التحقق من وجود رابط الدفع
+        if (response.payment_url) {
+            this._showMessage('success', 'تم التسجيل بنجاح', 'سيتم توجيهك لصفحة الدفع...');
+
+            // حفظ معلومات الحجز في localStorage
+            localStorage.setItem('charity_booking_id', response.booking_id);
+            if (response.invoice_id) {
+                localStorage.setItem('charity_invoice_id', response.invoice_id);
+                localStorage.setItem('charity_invoice_name', response.invoice_name);
+                localStorage.setItem('charity_amount', response.amount);
             }
-        }
-        // عضوة موجودة بدون اشتراك نشط
-        else if (response.member_found) {
-            this._showMessage('info', 'تم العثور على ملفك', `مرحباً ${response.member_name}!`);
+
+            // التوجيه لصفحة دفع Odoo الافتراضية
             setTimeout(() => {
-                this._redirectAfterSuccess(response);
-            }, 2000);
-        }
-        // عضوة جديدة
-        else {
-            this._showMessage('success', 'تم التسجيل بنجاح', 'سيتم توجيهك الآن...');
-            setTimeout(() => {
-                this._redirectAfterSuccess(response);
+                console.log('Redirecting to:', response.payment_url);
+                window.location.href = response.payment_url;
             }, 1500);
         }
-    },
+        // التحقق من وجود فاتورة بطريقة أخرى
+        else if (response.invoice_id && response.invoice) {
+            // بناء رابط الدفع يدوياً
+            const paymentUrl = `/my/invoices/${response.invoice.invoice_id}?access_token=${response.invoice.access_token}`;
 
-    _redirectAfterSuccess(response) {
-        if (response.has_invoice && response.invoice) {
-            window.location.href = `/registration/invoice/${response.invoice.invoice_id}/${response.invoice.access_token}`;
-        } else {
-            window.location.href = `/registration/success/ladies/${response.booking_id}`;
+            this._showMessage('success', 'تم التسجيل بنجاح', 'سيتم توجيهك لصفحة الدفع...');
+
+            setTimeout(() => {
+                console.log('Redirecting to invoice:', paymentUrl);
+                window.location.href = paymentUrl;
+            }, 1500);
+        }
+        // التحقق من has_invoice القديم
+        else if (response.has_invoice && response.invoice) {
+            // متوافق مع الكود القديم
+            const paymentUrl = `/my/invoices/${response.invoice.invoice_id}?access_token=${response.invoice.access_token}`;
+
+            this._showMessage('success', 'تم التسجيل بنجاح', 'سيتم توجيهك لصفحة الدفع...');
+
+            setTimeout(() => {
+                console.log('Redirecting to invoice (legacy):', paymentUrl);
+                window.location.href = paymentUrl;
+            }, 1500);
+        }
+        else {
+            // لا توجد فاتورة - التوجيه مباشرة لصفحة النجاح
+            console.log('No invoice found, redirecting to success page');
+            this._showMessage('success', 'تم التسجيل بنجاح', 'سيتم توجيهك الآن...');
+            setTimeout(() => {
+                window.location.href = `/registration/success/ladies/${response.booking_id}`;
+            }, 1500);
         }
     }
 });
@@ -315,7 +329,7 @@ publicWidget.registry.CharityClubRegistration = publicWidget.Widget.extend({
             id: Math.floor(Math.random() * 1000000000)
         };
 
-        // إرسال البيانات باستخدام jQuery AJAX
+        // إرسال البيانات
         $.ajax({
             url: '/registration/submit/club',
             type: 'POST',
@@ -346,177 +360,73 @@ publicWidget.registry.CharityClubRegistration = publicWidget.Widget.extend({
     }
 });
 
-// Widget للدفع
-publicWidget.registry.CharityPaymentProcess = publicWidget.Widget.extend({
-    selector: '#processPayment',
+// Widget للتحقق من حالة الدفع بعد العودة من Odoo Portal
+publicWidget.registry.CharityPaymentStatus = publicWidget.Widget.extend({
+    selector: '.charity-registration-success',
+
+    start() {
+        this._super(...arguments);
+
+        // التحقق من localStorage للحصول على معلومات الحجز
+        const bookingId = localStorage.getItem('charity_booking_id');
+        const invoiceId = localStorage.getItem('charity_invoice_id');
+
+        if (bookingId) {
+            // مسح البيانات من localStorage
+            localStorage.removeItem('charity_booking_id');
+            localStorage.removeItem('charity_invoice_id');
+            localStorage.removeItem('charity_invoice_name');
+            localStorage.removeItem('charity_amount');
+
+            console.log('Payment completed for booking:', bookingId);
+        }
+    }
+});
+
+// Widget لصفحة تأكيد الدفع
+publicWidget.registry.CharityPaymentConfirmation = publicWidget.Widget.extend({
+    selector: '.payment-confirmation-page',
     events: {
-        'click': '_onProcessPayment',
+        'click .check-payment-status': '_onCheckPaymentStatus',
     },
 
-    _showLoading(show = true) {
-        if (show) {
-            const loadingDiv = $('<div>', {
-                id: 'loadingOverlay',
-                class: 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center',
-                style: 'background: rgba(0,0,0,0.5); z-index: 9999;',
-                html: `
-                    <div class="bg-white rounded p-4 text-center">
-                        <div class="spinner-border text-primary mb-3" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div>جاري معالجة الدفعة...</div>
-                    </div>
-                `
-            });
-            $('body').append(loadingDiv);
-        } else {
-            $('#loadingOverlay').remove();
+    start() {
+        this._super(...arguments);
+
+        // التحقق التلقائي من حالة الدفع كل 5 ثوان
+        this.autoCheckInterval = setInterval(() => {
+            this._checkPaymentStatus();
+        }, 5000);
+    },
+
+    destroy() {
+        if (this.autoCheckInterval) {
+            clearInterval(this.autoCheckInterval);
         }
+        this._super(...arguments);
     },
 
-    _showMessage(type, title, text) {
-        this._showLoading(false);
-
-        const alertClass = type === 'error' ? 'alert-danger' : type === 'warning' ? 'alert-warning' : 'alert-success';
-        const alertDiv = $('<div>', {
-            class: `alert ${alertClass} alert-dismissible fade show position-fixed top-50 start-50 translate-middle`,
-            style: 'z-index: 9999; min-width: 300px;',
-            html: `
-                <h5 class="alert-heading">${title}</h5>
-                <p>${text}</p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `
-        });
-
-        $('body').append(alertDiv);
-        setTimeout(() => alertDiv.remove(), 5000);
+    _onCheckPaymentStatus(ev) {
+        ev.preventDefault();
+        this._checkPaymentStatus();
     },
 
-    _onProcessPayment(ev) {
-        const selectedProvider = $('input[name="payment_provider"]:checked');
+    _checkPaymentStatus() {
+        const bookingId = this.$el.data('booking-id');
 
-        if (!selectedProvider.length) {
-            this._showMessage('warning', 'تنبيه', 'يرجى اختيار طريقة الدفع');
-            return;
-        }
-
-        const providerId = selectedProvider.val();
-        const providerCode = selectedProvider.data('provider-code');
-        const invoiceId = this.$el.data('invoice-id');
-        const accessToken = this.$el.data('access-token');
-
-        this._showLoading(true);
-
-        // إنشاء معاملة الدفع
-        const jsonRpcData = {
-            jsonrpc: "2.0",
-            method: "call",
-            params: {
-                invoice_id: invoiceId,
-                access_token: accessToken,
-                provider_id: providerId
-            },
-            id: Math.floor(Math.random() * 1000000000)
-        };
+        if (!bookingId) return;
 
         $.ajax({
-            url: '/registration/payment/transaction/' + invoiceId + '/' + accessToken,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(jsonRpcData),
-            dataType: 'json',
-            success: (response) => {
-                this._showLoading(false);
-
-                if (response.error) {
-                    this._showMessage('error', 'خطأ', response.error.message || response.error.data?.message || 'حدث خطأ');
-                    return;
-                }
-
-                const result = response.result;
-                if (result.success) {
-                    // معالجة حسب نوع مزود الدفع
-                    if (providerCode === 'demo') {
-                        // للدفع التجريبي، ننتقل مباشرة للنجاح
-                        this._processTestPayment(result.transaction_id);
-                    } else if (result.payment_link) {
-                        // للمزودين الآخرين، نفتح رابط الدفع
-                        window.location.href = result.payment_link;
-                    } else {
-                        // معالجة مخصصة حسب المزود
-                        this._processProviderPayment(providerCode, result);
-                    }
-                } else {
-                    this._showMessage('error', 'خطأ', result.error || 'فشل إنشاء معاملة الدفع');
+            url: `/registration/check-payment/${bookingId}`,
+            type: 'GET',
+            success: (data) => {
+                if (data.paid) {
+                    // تم الدفع - إعادة تحميل الصفحة
+                    window.location.reload();
                 }
             },
             error: (xhr, status, error) => {
-                console.error('Payment error:', error);
-                this._showLoading(false);
-                this._showMessage('error', 'خطأ', 'حدث خطأ في الاتصال');
-            }
-        });
-    },
-
-    _processTestPayment(transactionId) {
-        // محاكاة عملية الدفع التجريبي
-        this._showMessage('info', 'دفع تجريبي', 'جاري محاكاة عملية الدفع...');
-
-        setTimeout(() => {
-            this._checkPaymentStatus(transactionId);
-        }, 2000);
-    },
-
-    _processProviderPayment(providerCode, result) {
-        // يمكن إضافة معالجة مخصصة لكل مزود
-        console.log('Processing payment for provider:', providerCode, result);
-
-        // افتراضياً، نتحقق من حالة المعاملة
-        if (result.transaction_id) {
-            this._checkPaymentStatus(result.transaction_id);
-        }
-    },
-
-    _checkPaymentStatus(transactionId) {
-        const jsonRpcData = {
-            jsonrpc: "2.0",
-            method: "call",
-            params: {
-                transaction_id: transactionId
-            },
-            id: Math.floor(Math.random() * 1000000000)
-        };
-
-        $.ajax({
-            url: '/registration/payment/status/' + transactionId,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(jsonRpcData),
-            dataType: 'json',
-            success: (response) => {
-                if (response.error) {
-                    this._showMessage('error', 'خطأ', response.error.message || 'حدث خطأ');
-                    return;
-                }
-
-                const result = response.result;
-                if (result.success && result.state === 'done') {
-                    this._showMessage('success', 'تم الدفع بنجاح!', result.message);
-                    setTimeout(() => {
-                        window.location.href = result.redirect_url;
-                    }, 1500);
-                } else if (result.state === 'pending') {
-                    // إعادة المحاولة بعد فترة
-                    setTimeout(() => {
-                        this._checkPaymentStatus(transactionId);
-                    }, 3000);
-                } else {
-                    this._showMessage('error', 'فشل الدفع', result.message || 'لم تكتمل عملية الدفع');
-                }
-            },
-            error: (xhr, status, error) => {
-                console.error('Status check error:', error);
-                this._showMessage('error', 'خطأ', 'حدث خطأ في التحقق من حالة الدفع');
+                console.error('Error checking payment status:', error);
             }
         });
     }
