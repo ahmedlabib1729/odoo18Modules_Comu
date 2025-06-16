@@ -1,76 +1,58 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'النوادي الخيرية - Charity Clubs',
-    'version': '18.0.1.0.0',
-    'category': 'Education',
-    'summary': 'إدارة النوادي التعليمية والبرامج التربوية للجمعيات الخيرية',
+    'name': 'إدارة مقرات الجمعية الخيرية',
+    'version': '1.0',
+    'category': 'Charity/Management',
+    'summary': 'إدارة المقرات والأقسام والنوادي للجمعية الخيرية',
     'description': """
-نظام إدارة النوادي الخيرية
-============================
-
-نظام متكامل لإدارة النوادي التعليمية والتربوية التابعة للجمعيات الخيرية
-
-المميزات الرئيسية:
------------------
-* إدارة متعددة للنوادي والفروع
-* إنشاء وإدارة البرامج التعليمية
-* نظام تسجيل متكامل للطلاب
-* متابعة المدفوعات والحالة المالية
-* لوحات تحكم للإدارة والموظفين
-* تقارير شاملة وإحصائيات
-
-الوظائف:
---------
-* إدارة النوادي: إنشاء وتنظيم النوادي المختلفة
-* البرامج: إنشاء البرامج التعليمية مع تحديد الأعمار والأوقات والأسعار
-* التسجيل: نظام تسجيل متكامل مع رفع المستندات
-* المدفوعات: متابعة المدفوعات وحالة السداد
-* قائمة الانتظار: إدارة تلقائية عند امتلاء البرامج
-* التقارير: تقارير الحضور والمالية والإحصائيات
+        موديول لإدارة:
+        - المقرات الخاصة بالجمعية الخيرية
+        - الأقسام داخل كل مقر
+        - النوادي داخل كل قسم
+        - تسجيلات النوادي
+        - حجوزات الأقسام
+        - ملفات الطلاب والعائلات
     """,
-    'author': 'Your Company',
-    'website': 'https://www.yourcompany.com',
-    'license': 'LGPL-3',
-
-    # Dependencies
-    'depends': [
-        'base',
-        'mail',
-        'web',
-        'website',
-        'account',# للواجهة العامة
-    ],
-
-    # Data files
+    'author': 'Your Name',
+    'website': 'https://www.yourwebsite.com',
+    'depends': ['base', 'mail', 'contacts', 'account', 'base_automation', 'website', 'portal', 'payment'],
     'data': [
-        # Security
-        'security/security_groups.xml',
         'security/ir.model.access.csv',
+        'data/member_sequences.xml',
+        'data/member_cron.xml',
 
-        # Data
-        'data/ir_sequence_data.xml',
-        #'data/mail_template_data.xml',
+        'views/headquarters_views.xml',
+        'views/departments_views.xml',
+        'views/ladies_program_views.xml',  # أضف هذا السطر هنا
+        'views/clubs_views.xml',
+        'views/student_family_views.xml',
+        'views/club_registration_views.xml',
+        'views/member_views.xml',
+        'views/booking_registration_views.xml',
+        'views/headquarters_menu.xml', # القوائم في النهاية
 
-        # Views
-        'views/charity_club_views.xml',
-        'views/club_program_views.xml',
-        'views/program_registration_views.xml',
 
+        # Website files
         'views/website_templates.xml',
-        'views/registration_form_template.xml',
         'views/website_menu.xml',
-
 
     ],
 
 'assets': {
         'web.assets_frontend': [
-            'charity_clubs/static/src/css/website.css',
+            'charity_clubs/static/src/css/website_registration.css',
+
+            'charity_clubs/static/src/css/website_registration.css',
+
+            # External Libraries - تحميل SweetAlert2
+            ('include', 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css'),
+
+            'charity_clubs/static/src/js/website_registration_simple.js',
         ],
     },
 
-    # Other configurations
     'installable': True,
     'application': True,
     'auto_install': False,
+    'license': 'LGPL-3',
 }
