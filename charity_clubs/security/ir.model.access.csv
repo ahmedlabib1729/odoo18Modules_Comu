@@ -22,3 +22,4 @@ access_charity_booking_registrations_manager,charity.booking.registrations.manag
 access_charity_ladies_program_user,charity.ladies.program.user,model_charity_ladies_program,base.group_user,1,0,0,0
 access_charity_ladies_program_manager,charity.ladies.program.manager,model_charity_ladies_program,base.group_system,1,1,1,1
 access_charity_club_registration_review_wizard,charity.club.registration.review.wizard,model_charity_club_registration_review_wizard,,1,1,1,1
+access_school_grade,school.grade,model_school_grade,,1,1,1,1

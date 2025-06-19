@@ -59,7 +59,11 @@
                   parent="menu_charity_clubs"
                   action="action_charity_club_terms"
                   sequence="20"/>
-
+        <menuitem id="menu_school_grade"
+                    name="الصفوف الدراسية"
+                    action="action_school_grade"
+                    parent="menu_charity_clubs"
+                    sequence="30"/>
         <!-- Registrations Menu -->
         <menuitem id="menu_charity_registrations"
                   name="التسجيلات والحجوزات"

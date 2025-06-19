@@ -105,12 +105,16 @@ class CharityRegistrationController(http.Controller):
             ('date_to', '>=', today)
         ])
 
+        # إضافة الصفوف الدراسية
+        grades = request.env['school.grade'].sudo().search([], order='id')
+
         values = {
             'club': club,
             'department': club.department_id,
             'headquarters': club.department_id.headquarters_id,
             'terms': terms,
             'countries': request.env['res.country'].sudo().search([]),
+            'grades': grades,  # السطر الجديد
             'page_title': f'التسجيل في {club.name}'
         }
         return request.render('charity_clubs.club_registration_form', values)
@@ -761,7 +765,7 @@ class CharityRegistrationController(http.Controller):
             # التحقق من البيانات المطلوبة
             required_fields = ['headquarters_id', 'department_id', 'club_id', 'term_id',
                                'full_name', 'birth_date', 'gender', 'nationality',
-                               'id_number', 'student_grade', 'mother_name', 'mother_mobile',
+                               'id_number', 'student_grade_id', 'mother_name', 'mother_mobile',
                                'father_name', 'father_mobile']
 
             for field in required_fields:
@@ -789,7 +793,7 @@ class CharityRegistrationController(http.Controller):
                 'nationality': int(post.get('nationality')),
                 'id_type': post.get('id_type', 'emirates_id'),
                 'id_number': post.get('id_number'),
-                'student_grade': post.get('student_grade'),
+                'student_grade_id': int(post.get('student_grade_id')),  # تم التعديل هنا
                 'mother_name': post.get('mother_name'),
                 'mother_mobile': post.get('mother_mobile'),
                 'father_name': post.get('father_name'),

@@ -117,7 +117,7 @@
         <!-- صفحة النوادي -->
         <template id="registration_clubs" name="اختيار النادي">
             <t t-call="website.layout">
-                <t t-set="title">نوادي <t t-esc="department.name"/></t>
+                <t t-set="title"> <t t-esc="department.name"/></t>
 
                 <div class="charity-registration-page">
                     <!-- Breadcrumb -->
@@ -141,7 +141,7 @@
                     <section class="hero-section text-white text-center py-5">
                         <div class="container">
                             <h1 class="display-4 mb-3">
-                                نوادي <t t-esc="department.name"/>
+                                 <t t-esc="department.name"/>
                             </h1>
                             <p class="lead">اختر النادي المناسب لطفلك</p>
                         </div>
@@ -160,10 +160,17 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="club-info">
+                                                        <div>
+                                                            <i class="fa fa-calendar-o"></i>
+                                                            <span t-esc="club.day_of_week"/>
+                                                        </div>
+
                                                         <div class="info-item">
                                                             <i class="fa fa-clock-o"></i>
                                                             <span t-esc="club.time_display"/>
+
                                                         </div>
+
                                                         <div class="info-item">
                                                             <i class="fa fa-birthday-cake"></i>
                                                             <span t-esc="club.age_range_display"/>
@@ -244,7 +251,7 @@
                                             <!-- اختيار الترم -->
                                             <div class="form-section-title">
                                                 <i class="fa fa-calendar"></i>
-                                                اختر الترم
+                                                اختر الفصل
                                             </div>
                                             <div class="row mb-4">
                                                 <div class="col-12">
@@ -317,16 +324,23 @@
                                                     <label class="form-label required">نوع الهوية</label>
                                                     <select class="form-select" name="id_type" required="required">
                                                         <option value="emirates_id" selected="selected">الهوية الإماراتية</option>
-                                                        <option value="passport">جواز السفر</option>
+
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label required">رقم الهوية/الجواز</label>
+                                                    <label class="form-label required">رقم الهوية الإمارتية</label>
                                                     <input type="text" class="form-control" name="id_number" required="required"/>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label required">الصف الدراسي</label>
-                                                    <input type="text" class="form-control" name="student_grade" placeholder="مثال: الصف الخامس" required="required"/>
+                                                    <select class="form-select" name="student_grade_id" required="required">
+                                                        <option value="">-- اختر الصف --</option>
+                                                        <t t-foreach="grades" t-as="grade">
+                                                            <option t-att-value="grade.id">
+                                                                <t t-esc="grade.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label required">تعلم اللغة العربية بالمدرسة</label>
@@ -373,25 +387,25 @@
                                             <!-- الخبرات السابقة -->
                                             <div class="form-section-title">
                                                 <i class="fa fa-history"></i>
-                                                الخبرات السابقة
+                                                رحلة المشترك فى رؤيتى
                                             </div>
                                             <div class="previous-experience mb-4">
                                                 <div class="form-check mb-2">
                                                     <input class="form-check-input" type="checkbox" name="previous_roayati_member" value="true" id="prevRoayati"/>
                                                     <label class="form-check-label" for="prevRoayati">
-                                                        كان مشترك بنوادي رؤيتي سابقاً
+                                                        المشترك كان مسجلاً فى بنوادى رؤيتى
                                                     </label>
                                                 </div>
                                                 <div class="form-check mb-2">
                                                     <input class="form-check-input" type="checkbox" name="previous_arabic_club" value="true" id="prevArabic"/>
                                                     <label class="form-check-label" for="prevArabic">
-                                                        كان مشترك بنادي لغة عربية سابقاً
+                                                        المشترك كان مسجلاً بنوادى اللغة العربية
                                                     </label>
                                                 </div>
                                                 <div class="form-check mb-2">
                                                     <input class="form-check-input" type="checkbox" name="previous_qaida_noorania" value="true" id="prevQaida"/>
                                                     <label class="form-check-label" for="prevQaida">
-                                                        أخذ القاعدة النورانية سابقاً
+                                                        المشترك تعلم القاعدة النوانية
                                                     </label>
                                                 </div>
                                                 <div class="mt-3">

@@ -56,11 +56,13 @@
                             </group>
                             <group string="الأوقات والأعمار">
                                 <label for="time_from" string="أوقات النادي"/>
+
                                 <div class="o_row">
                                     <field name="time_from" widget="float_time" nolabel="1"/>
                                     <span class="mx-2">إلى</span>
                                     <field name="time_to" widget="float_time" nolabel="1"/>
                                 </div>
+                                <field name="day_of_week"/>
                                 <label for="age_from" string="الفئة العمرية"/>
                                 <div class="o_row">
                                     <span>من</span>

@@ -56,19 +56,19 @@ class ClubRegistrations(models.Model):
 
     # معلومات التسجيل السابق
     previous_roayati_member = fields.Boolean(
-        string='هل كان مشترك بنوادي رؤيتي سابقاً؟',
+        string='المشترك كان مسجلاً فى بنوادى رؤيتى ',
         default=False,
         help='حدد إذا كان الطالب مشترك سابقاً في نوادي رؤيتي'
     )
 
     previous_arabic_club = fields.Boolean(
-        string='هل كان مشترك بنادي لغة عربية سابقاً؟',
+        string='المشترك كان مسجلاً بنوادى اللغة العربية ',
         default=False,
         help='حدد إذا كان الطالب مشترك سابقاً في نادي اللغة العربية'
     )
 
     previous_qaida_noorania = fields.Boolean(
-        string='هل أخذ القاعدة النورانية سابقاً؟',
+        string='المشترك تعلم القاعدة النوانية ',
         default=False,
         help='حدد إذا كان الطالب قد درس القاعدة النورانية سابقاً'
     )
@@ -92,11 +92,7 @@ class ClubRegistrations(models.Model):
         help='اختر جنسية الطالب'
     )
 
-    student_grade = fields.Char(
-        string='الصف',
-        required=True,
-        help='أدخل الصف الدراسي للطالب'
-    )
+
 
     # معلومات الوالدين
     mother_name = fields.Char(
@@ -372,6 +368,13 @@ class ClubRegistrations(models.Model):
         compute='_compute_discounts',
         store=True,
         help='المبلغ النهائي بعد الخصم'
+    )
+
+    student_grade_id = fields.Selection(
+        selection='_get_grade_selection',
+        string='الصف',
+        required=True,
+        help='اختر الصف الدراسي للطالب'
     )
 
     @api.depends('birth_date', 'student_profile_id')
@@ -1484,6 +1487,23 @@ class ClubRegistrations(models.Model):
         """تخصيص طريقة عرض اسم التسجيل"""
         result = []
         for record in self:
-            name = f"{record.full_name} - {record.student_grade}" if record.full_name else "تسجيل جديد"
+            name = f"{record.full_name} - {record.student_grade_id}" if record.full_name else "تسجيل جديد"
             result.append((record.id, name))
         return result
+
+    @api.model
+    def _get_grade_selection(self):
+        grades = []
+        # جيب كل الصفوف من الجدول
+        all_grades = self.env['school.grade'].search([])
+        for grade in all_grades:
+            grades.append((str(grade.id), grade.name))
+        return grades
+
+
+
+class SchoolGrade(models.Model):
+    _name = 'school.grade'
+    _description = 'الصفوف الدراسية'
+
+    name = fields.Char(string='اسم الصف', required=True)

@@ -118,6 +118,16 @@ class CharityClubs(models.Model):
         help='ترمات النادي'
     )
 
+    day_of_week = fields.Selection([
+        ('monday', 'الإثنين'),
+        ('tuesday', 'الثلاثاء'),
+        ('wednesday', 'الأربعاء'),
+        ('thursday', 'الخميس'),
+        ('friday', 'الجمعة'),
+        ('saturday', 'السبت'),
+        ('sunday', 'الأحد'),
+    ], string='اليوم', required=True)
+
     # Computed fields
     terms_count = fields.Integer(
         string='عدد الترمات',

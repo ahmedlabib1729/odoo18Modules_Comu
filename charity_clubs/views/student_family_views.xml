@@ -72,7 +72,7 @@
                                     <list>
                                         <field name="term_id" string="الترم"/>
                                         <field name="club_id" string="النادي"/>
-                                        <field name="student_grade" string="الصف"/>
+                                        <field name="student_grade_id" string="الصف"/>
                                         <field name="registration_date" string="تاريخ التسجيل"/>
                                         <field name="state" string="الحالة" widget="badge"/>
                                     </list>
