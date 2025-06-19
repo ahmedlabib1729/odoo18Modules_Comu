@@ -56,6 +56,7 @@
                                 <field name="mobile" widget="phone"/>
                                 <field name="whatsapp" widget="phone"/>
                                 <field name="email" widget="email"/>
+                                <field name="lady_type" required="1" widget="selection"/>
                             </group>
                         </group>
 

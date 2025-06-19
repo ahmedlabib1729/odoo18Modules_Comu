@@ -8,13 +8,80 @@
             <field name="arch" type="xml">
                 <form string="تسجيل في النوادي">
                     <header>
-                        <button name="action_confirm" string="تأكيد" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                        <button name="action_approve" string="اعتماد" type="object" class="oe_highlight" invisible="state != 'confirmed'" groups="base.group_system"/>
-                        <button name="action_reject" string="رفض" type="object" invisible="state not in ('draft', 'confirmed')" groups="base.group_system"/>
-                        <button name="action_cancel" string="إلغاء" type="object" invisible="state == 'approved'"/>
-                        <button name="action_reset_draft" string="إعادة للمسودة" type="object" invisible="state == 'draft'" groups="base.group_system"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,approved"/>
-                    </header>
+    <!-- زر التأكيد -->
+    <button name="action_confirm"
+            string="تأكيد"
+            type="object"
+            class="btn-primary"
+            invisible="state != 'draft'"/>
+
+    <!-- زر المراجعة والقرار -->
+
+
+    <!-- زر التأكيد بعد المراجعة -->
+    <button name="action_confirm_after_review"
+            string="تأكيد بعد المراجعة"
+            type="object"
+            class="btn-success"
+            invisible="state != 'pending_review'"
+            confirm="هل أنت متأكد من تأكيد هذا التسجيل؟"/>
+
+    <!-- زر الرفض -->
+    <button name="action_reject_after_review"
+            string="رفض"
+            type="object"
+            class="btn-danger"
+            invisible="state != 'pending_review'"
+            confirm="هل أنت متأكد من رفض هذا التسجيل؟"/>
+
+    <!-- زر الاعتماد -->
+    <button name="action_approve"
+            string="اعتماد"
+            type="object"
+            class="btn-success"
+            invisible="state != 'confirmed'"/>
+
+    <!-- زر الإلغاء -->
+    <button name="action_cancel"
+            string="إلغاء"
+            type="object"
+            invisible="state not in ['draft', 'confirmed', 'pending_review']"/>
+
+    <!-- زر إعادة للمسودة -->
+    <button name="action_reset_draft"
+            string="إعادة للمسودة"
+            type="object"
+            invisible="state not in ['cancelled', 'rejected']"/>
+
+    <!-- زر عرض الفاتورة -->
+    <button name="action_view_invoice"
+            string="عرض الفاتورة"
+            type="object"
+            class="btn-info"
+            invisible="not invoice_id"
+            icon="fa-file-text-o"/>
+
+    <!-- زر عرض ملف الطالب -->
+    <button name="action_view_student_profile"
+            string="ملف الطالب"
+            type="object"
+            class="btn-info"
+            invisible="not student_profile_id"
+            icon="fa-user"/>
+
+    <!-- زر إنشاء ملف طالب يدوياً -->
+    <button name="action_create_student_profile"
+            string="إنشاء ملف طالب"
+            type="object"
+            class="btn-secondary"
+            invisible="registration_type != 'new' or student_profile_id"
+            confirm="هل تريد إنشاء ملف طالب لهذا التسجيل؟"/>
+
+    <!-- شريط الحالة -->
+    <field name="state" widget="statusbar"
+           statusbar_visible="draft,pending_review,confirmed,approved"/>
+</header>
+
                     <sheet>
                         <div class="oe_button_box" name="button_box">
                             <!-- زر عرض ملف الطالب -->
@@ -54,8 +121,14 @@
                             <i class="fa fa-info-circle"/> في انتظار دفع الفاتورة - سعر الترم:
                             <field name="term_price" widget="monetary" nolabel="1" readonly="1"/>
                         </div>
-
-                        <!-- اختيار نوع التسجيل -->
+                             <div class="alert alert-warning" role="alert"
+                                 invisible="state != 'pending_review'">
+                                <h4 class="alert-heading">
+                                    <i class="fa fa-exclamation-triangle"/> يحتاج مراجعة الإدارة
+                                </h4>
+                                <field name="review_reason" readonly="1" nolabel="1"/>
+                            </div>
+                           <!-- اختيار نوع التسجيل -->
                         <group col="4">
                             <field name="registration_type" widget="radio" options="{'horizontal': true}" readonly="state != 'draft'" nolabel="1" colspan="4"/>
                         </group>

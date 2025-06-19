@@ -156,6 +156,11 @@
                                 <field name="age" readonly="1"/>
                                 <field name="email" placeholder="example@email.com"
                                        readonly="state != 'draft' or (booking_type == 'existing' and department_type == 'ladies')"/>
+                                <field name="lady_type"
+                                       required="booking_type == 'new' and department_type == 'ladies'"
+                                       readonly="state != 'draft' or (booking_type == 'existing' and department_type == 'ladies')"
+                                       invisible="department_type != 'ladies'"/>
+
                             </group>
                         </group>
 

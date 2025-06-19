@@ -95,7 +95,7 @@
                                                 </div>
                                                 <t t-if="dept.type in ['ladies', 'nursery'] and dept.booking_price">
                                                     <div class="price">
-                                                        <span class="amount" t-esc="dept.booking_price"/> ريال
+                                                        <span class="amount" t-esc="dept.booking_price"/> درهم إمارتى
                                                     </div>
                                                 </t>
                                                 <t t-if="dept.type == 'clubs'">
@@ -259,7 +259,7 @@
                                                                         من <t t-esc="term.date_from"/> إلى <t t-esc="term.date_to"/>
                                                                     </div>
                                                                     <div class="term-price">
-                                                                        <span class="amount" t-esc="term.price"/> ريال
+                                                                        <span class="amount" t-esc="term.price"/> درهم إمارتى
                                                                     </div>
                                                                     <div class="term-availability">
                                                                         <t t-if="term.available_seats > 0">
@@ -418,6 +418,64 @@
                                                 </div>
                                             </div>
 
+                                            <div class="form-section-title">
+                                                <i class="fa fa-camera"></i>
+                                                صور الهوية المطلوبة
+                                            </div>
+                                            <div class="id-photos-section mb-4">
+                                                <div class="alert alert-info">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    <strong>ملاحظة:</strong> يجب رفع صورة واضحة للوجه الأول والثاني من الهوية
+                                                </div>
+                                                <div class="row g-3">
+                                                    <div class="col-md-12">
+                                                        <label class="form-label required">صورة الهوية - الوجه الأول</label>
+                                                        <div class="file-upload-wrapper">
+                                                            <input type="file"
+                                                                   class="form-control file-upload"
+                                                                   name="id_front_file"
+                                                                   id="id_front_file"
+                                                                   accept="image/*,.pdf"
+                                                                   required="required"/>
+                                                            <div class="file-upload-info">
+                                                                <i class="fa fa-id-card"></i>
+                                                                <span>اضغط لاختيار صورة الوجه الأول أو اسحب الملف هنا</span>
+                                                                <small class="d-block text-muted mt-1">الملفات المسموحة: JPG, PNG, PDF (حجم أقصى 5MB)</small>
+                                                            </div>
+                                                            <div class="file-preview" id="id_front_preview" style="display: none;">
+                                                                <span class="file-name"></span>
+                                                                <button type="button" class="btn btn-sm btn-danger remove-file" data-target="id_front_file">
+                                                                    <i class="fa fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-12">
+                                                        <label class="form-label required">صورة الهوية - الوجه الثاني</label>
+                                                        <div class="file-upload-wrapper">
+                                                            <input type="file"
+                                                                   class="form-control file-upload"
+                                                                   name="id_back_file"
+                                                                   id="id_back_file"
+                                                                   accept="image/*,.pdf"
+                                                                   required="required"/>
+                                                            <div class="file-upload-info">
+                                                                <i class="fa fa-id-card-o"></i>
+                                                                <span>اضغط لاختيار صورة الوجه الثاني أو اسحب الملف هنا</span>
+                                                                <small class="d-block text-muted mt-1">الملفات المسموحة: JPG, PNG, PDF (حجم أقصى 5MB)</small>
+                                                            </div>
+                                                            <div class="file-preview" id="id_back_preview" style="display: none;">
+                                                                <span class="file-name"></span>
+                                                                <button type="button" class="btn btn-sm btn-danger remove-file" data-target="id_back_file">
+                                                                    <i class="fa fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <!-- الموافقات -->
                                             <div class="form-section-title">
                                                 <i class="fa fa-check-square-o"></i>
@@ -425,12 +483,14 @@
                                             </div>
                                             <div class="agreements mb-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="photo_consent" value="true" id="photoConsent" required="required"/>
+                                                    <input class="form-check-input" type="checkbox" name="photo_consent" value="true" id="photoConsent"/>
                                                     <label class="form-check-label" for="photoConsent">
                                                         أوافق على تصوير الطالب خلال فعاليات النوادي ونشرها في مواقع التواصل الاجتماعي للجمعية
                                                     </label>
                                                 </div>
                                             </div>
+
+
 
                                             <!-- زر الإرسال -->
                                             <div class="text-center mt-5">
@@ -481,7 +541,7 @@
                                             <h2>التسجيل في <t t-esc="department.name"/></h2>
                                             <p class="text-muted">يرجى ملء البيانات المطلوبة</p>
                                             <div class="price-badge">
-                                                <span class="amount" t-esc="department.booking_price"/> ريال
+                                                <span class="amount" t-esc="department.booking_price"/> درهم إمارتى
                                             </div>
                                         </div>
 
@@ -515,6 +575,16 @@
                                                 <div class="col-12">
                                                     <label class="form-label required">البريد الإلكتروني</label>
                                                     <input type="email" class="form-control" name="email" required="required"/>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label required">صفة السيدة</label>
+                                                    <select class="form-select" name="lady_type" required="required">
+                                                        <option value="">اختر...</option>
+                                                        <option value="pioneer">رائدة</option>
+                                                        <option value="volunteer">متطوعة</option>
+                                                        <option value="member" selected="selected">عضوة</option>
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -712,7 +782,92 @@
     </t>
 </template>
 
+<template id="registration_pending" name="التسجيل قيد المراجعة">
+    <t t-call="website.layout">
+        <t t-set="title">التسجيل قيد المراجعة</t>
 
+        <div class="charity-registration-page">
+            <section class="pending-section py-5">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="pending-card">
+                                <div class="pending-icon text-warning text-center mb-4">
+                                    <i class="fa fa-clock-o fa-5x"></i>
+                                </div>
+
+                                <h1 class="text-center mb-4">التسجيل قيد المراجعة</h1>
+
+                                <div class="alert alert-warning">
+                                    <h4 class="alert-heading">
+                                        <i class="fa fa-exclamation-triangle"></i> يحتاج مراجعة الإدارة
+                                    </h4>
+                                    <p>تم استلام طلب التسجيل بنجاح، لكن يحتاج إلى مراجعة من قبل الإدارة.</p>
+                                    <hr/>
+                                    <p class="mb-0">
+                                        <strong>السبب:</strong> وجود تعارض في رقم الهوية المدخل
+                                    </p>
+                                </div>
+
+                                <div class="registration-info mt-4">
+                                    <h3>معلومات التسجيل</h3>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="30%">رقم التسجيل</th>
+                                            <td><strong t-esc="record.id"/></td>
+                                        </tr>
+                                        <tr>
+                                            <th>اسم الطالب</th>
+                                            <td t-esc="record.full_name"/>
+                                        </tr>
+                                        <tr>
+                                            <th>النادي</th>
+                                            <td t-esc="record.club_id.name"/>
+                                        </tr>
+                                        <tr>
+                                            <th>الترم</th>
+                                            <td t-esc="record.term_id.name"/>
+                                        </tr>
+                                        <tr>
+                                            <th>تاريخ التسجيل</th>
+                                            <td t-esc="record.registration_date" t-options='{"widget": "datetime"}'/>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <div class="next-steps mt-4">
+                                    <h3>الخطوات التالية</h3>
+                                    <ol>
+                                        <li>سيقوم فريق الإدارة بمراجعة البيانات المدخلة</li>
+                                        <li>قد يتم التواصل معك للتحقق من بعض المعلومات</li>
+                                        <li>سيتم إشعارك بقرار الإدارة (الموافقة أو طلب تعديل البيانات)</li>
+                                        <li>في حالة الموافقة، ستتمكن من إكمال عملية الدفع</li>
+                                    </ol>
+                                </div>
+
+                                <div class="contact-info alert alert-info mt-4">
+                                    <h5><i class="fa fa-info-circle"></i> للاستفسار</h5>
+                                    <p>يمكنك التواصل مع الإدارة على:</p>
+                                    <ul>
+                                        <li>الهاتف: <a href="tel:+971501234567" dir="ltr">+971 50 123 4567</a></li>
+                                        <li>البريد: <a href="mailto:registration@charity.ae">registration@charity.ae</a></li>
+                                    </ul>
+                                    <p class="mb-0">مع ذكر رقم التسجيل: <strong t-esc="record.id"/></p>
+                                </div>
+
+                                <div class="text-center mt-5">
+                                    <a href="/registration" class="btn btn-primary btn-lg">
+                                        <i class="fa fa-home"></i> العودة للصفحة الرئيسية
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </t>
+</template>
 
 
 

@@ -64,6 +64,17 @@ class BookingRegistrations(models.Model):
         help='البريد الإلكتروني للتواصل'
     )
 
+    # صفة السيدة
+    lady_type = fields.Selection([
+        ('pioneer', 'رائدة'),
+        ('volunteer', 'متطوعة'),
+        ('member', 'عضوة')
+    ], string='صفة السيدة',
+        default='member',
+        tracking=True,
+        help='اختر صفة السيدة'
+    )
+
     # حقول الحجز
     headquarters_id = fields.Many2one(
         'charity.headquarters',
@@ -202,6 +213,7 @@ class BookingRegistrations(models.Model):
         string='حالة الدفع',
         store=True
     )
+
     @api.depends('full_name', 'department_id')
     def _compute_display_name(self):
         """حساب اسم العرض"""
@@ -248,6 +260,7 @@ class BookingRegistrations(models.Model):
             self.whatsapp = False
             self.birth_date = False
             self.email = False
+            self.lady_type = 'member'  # إعادة تعيين صفة السيدة
 
     @api.onchange('member_id')
     def _onchange_member_id(self):
@@ -257,6 +270,7 @@ class BookingRegistrations(models.Model):
             self.mobile = self.member_id.mobile
             self.whatsapp = self.member_id.whatsapp
             self.email = self.member_id.email
+            self.lady_type = self.member_id.lady_type  # نقل صفة السيدة من ملف العضوة
 
             # ملء الملفات إذا كانت موجودة
             if self.member_id.id_card_file:
@@ -354,6 +368,7 @@ class BookingRegistrations(models.Model):
             'mobile': self.mobile,
             'whatsapp': self.whatsapp,
             'email': self.email,
+            'lady_type': self.lady_type,  # إضافة صفة السيدة
         }
 
         # إضافة الملفات إذا كانت موجودة
@@ -406,6 +421,8 @@ class BookingRegistrations(models.Model):
                 if record.department_type == 'ladies':
                     if not record.whatsapp:
                         raise ValidationError('يجب إدخال رقم الواتساب!')
+                    if not record.lady_type:
+                        raise ValidationError('يجب اختيار صفة السيدة!')
 
                     # التحقق من المستندات الإجبارية للسيدات الجدد
                     if not record.id_card_file:
@@ -421,11 +438,11 @@ class BookingRegistrations(models.Model):
 
                 # للعضوات الموجودات، نتحقق من وجود المستندات إما في الحجز أو في ملف العضوة
                 has_id_card = record.id_card_file or (
-                            hasattr(record.member_id, 'id_card_file') and record.member_id.id_card_file)
+                        hasattr(record.member_id, 'id_card_file') and record.member_id.id_card_file)
                 has_passport = record.passport_file or (
-                            hasattr(record.member_id, 'passport_file') and record.member_id.passport_file)
+                        hasattr(record.member_id, 'passport_file') and record.member_id.passport_file)
                 has_residence = record.residence_file or (
-                            hasattr(record.member_id, 'residence_file') and record.member_id.residence_file)
+                        hasattr(record.member_id, 'residence_file') and record.member_id.residence_file)
 
                 if not has_id_card:
                     raise ValidationError('يجب رفع صورة الهوية أو التأكد من وجودها في ملف العضوة!')

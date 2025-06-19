@@ -115,6 +115,7 @@ class CharityRegistrationController(http.Controller):
         }
         return request.render('charity_clubs.club_registration_form', values)
 
+    # تحديث معالج تسجيل السيدات
     @http.route('/registration/submit/ladies', type='json', auth='public', website=True, csrf=False)
     def submit_ladies_registration(self, **post):
         """معالجة تسجيل السيدات مع التوجيه المباشر للدفع"""
@@ -123,7 +124,7 @@ class CharityRegistrationController(http.Controller):
 
             # التحقق من البيانات المطلوبة
             required_fields = ['department_id', 'full_name', 'mobile', 'whatsapp',
-                               'birth_date', 'email', 'booking_type']
+                               'birth_date', 'email', 'booking_type', 'lady_type']  # إضافة lady_type
 
             for field in required_fields:
                 if not post.get(field):
@@ -162,6 +163,7 @@ class CharityRegistrationController(http.Controller):
                 'whatsapp': post.get('whatsapp'),
                 'birth_date': post.get('birth_date'),
                 'email': post.get('email'),
+                'lady_type': post.get('lady_type'),  # إضافة صفة السيدة
                 'state': 'draft'
             }
 
@@ -752,8 +754,10 @@ class CharityRegistrationController(http.Controller):
 
     @http.route('/registration/submit/club', type='json', auth='public', website=True, csrf=False)
     def submit_club_registration(self, **post):
-        """معالجة تسجيل النوادي"""
+        """معالجة تسجيل النوادي مع التأكيد التلقائي أو المراجعة"""
         try:
+            _logger.info(f"Received club registration data: {post}")
+
             # التحقق من البيانات المطلوبة
             required_fields = ['headquarters_id', 'department_id', 'club_id', 'term_id',
                                'full_name', 'birth_date', 'gender', 'nationality',
@@ -762,7 +766,15 @@ class CharityRegistrationController(http.Controller):
 
             for field in required_fields:
                 if not post.get(field):
+                    _logger.error(f"Missing required field: {field}")
                     return {'success': False, 'error': f'الحقل {field} مطلوب'}
+
+            # التحقق من الملفات المطلوبة
+            if not post.get('id_front_file'):
+                return {'success': False, 'error': 'يجب رفع صورة الوجه الأول من الهوية'}
+
+            if not post.get('id_back_file'):
+                return {'success': False, 'error': 'يجب رفع صورة الوجه الثاني من الهوية'}
 
             # إنشاء التسجيل
             registration_vals = {
@@ -795,17 +807,106 @@ class CharityRegistrationController(http.Controller):
                 'state': 'draft'
             }
 
-            registration = request.env['charity.club.registrations'].sudo().create(registration_vals)
+            # إضافة الملفات المرفوعة
+            if post.get('id_front_file'):
+                registration_vals['id_front_file'] = base64.b64decode(post.get('id_front_file'))
+                registration_vals['id_front_filename'] = post.get('id_front_file_name', 'id_front.pdf')
 
-            return {
+            if post.get('id_back_file'):
+                registration_vals['id_back_file'] = base64.b64decode(post.get('id_back_file'))
+                registration_vals['id_back_filename'] = post.get('id_back_file_name', 'id_back.pdf')
+
+            # إنشاء التسجيل
+            registration = request.env['charity.club.registrations'].sudo().create(registration_vals)
+            _logger.info(f"Club registration created with ID: {registration.id}")
+
+            # تأكيد التسجيل تلقائياً
+            try:
+                registration.action_confirm()
+                _logger.info(f"Registration confirmed. State: {registration.state}")
+
+                # إذا فشل التأكيد، نتحقق من السبب
+                if registration.state == 'draft':
+                    _logger.error("Registration still in draft after confirm attempt")
+                    return {
+                        'success': False,
+                        'error': 'فشل تأكيد التسجيل. يرجى مراجعة البيانات المدخلة.'
+                    }
+
+            except ValidationError as e:
+                _logger.error(f"Validation error during confirmation: {str(e)}")
+                # حذف التسجيل إذا فشل التأكيد
+                registration.unlink()
+                return {'success': False, 'error': str(e)}
+            except Exception as e:
+                _logger.error(f"Error confirming registration: {str(e)}")
+                import traceback
+                _logger.error(traceback.format_exc())
+                # حذف التسجيل إذا فشل التأكيد
+                registration.unlink()
+                return {'success': False, 'error': 'حدث خطأ أثناء معالجة التسجيل'}
+
+            # إرجاع نتيجة مختلفة حسب الحالة
+            result = {
                 'success': True,
-                'message': 'تم التسجيل بنجاح',
-                'registration_id': registration.id
+                'registration_id': registration.id,
+                'state': registration.state,
+                'has_invoice': bool(registration.invoice_id)
             }
+
+            if registration.state == 'pending_review':
+                # حالة المراجعة
+                result.update({
+                    'message': 'تم استلام التسجيل وسيتم مراجعته من قبل الإدارة',
+                    'needs_review': True,
+                    'review_reason': registration.review_reason
+                })
+            elif registration.state == 'confirmed' and registration.invoice_id:
+                # التأكيد العادي مع فاتورة
+                if registration.invoice_id.state == 'posted':  # التأكد أن الفاتورة مرحلة
+                    if not registration.invoice_id.access_token:
+                        registration.invoice_id._portal_ensure_token()
+
+                    base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                    payment_url = f"{base_url}/my/invoices/{registration.invoice_id.id}?access_token={registration.invoice_id.access_token}"
+
+                    result.update({
+                        'message': 'تم التسجيل بنجاح',
+                        'invoice_id': registration.invoice_id.id,
+                        'invoice_name': registration.invoice_id.name,
+                        'amount': registration.invoice_id.amount_total,
+                        'payment_url': payment_url
+                    })
+                else:
+                    # فاتورة موجودة لكن غير مرحلة
+                    _logger.warning(f"Invoice exists but not posted for registration {registration.id}")
+                    result['message'] = 'تم التسجيل بنجاح'
+            else:
+                result['message'] = 'تم التسجيل بنجاح'
+
+            return result
 
         except Exception as e:
             _logger.error(f"Error in club registration: {str(e)}")
+            import traceback
+            _logger.error(traceback.format_exc())
             return {'success': False, 'error': str(e)}
+
+
+    @http.route('/registration/pending/club/<int:registration_id>', type='http', auth='public', website=True)
+    def registration_pending(self, registration_id, **kwargs):
+        """صفحة التسجيل المعلق"""
+        registration = request.env['charity.club.registrations'].sudo().browse(registration_id)
+
+        if not registration.exists() or registration.state != 'pending_review':
+            return request.redirect('/registration')
+
+        values = {
+            'record': registration,
+            'page_title': 'التسجيل قيد المراجعة'
+        }
+
+        return request.render('charity_clubs.registration_pending', values)
 
     @http.route('/registration/success/<string:type>/<int:record_id>', type='http', auth='public', website=True)
     def registration_success(self, type, record_id, **kwargs):

@@ -30,6 +30,8 @@
                     <sheet>
                         <widget name="web_ribbon" title="مؤرشف" bg_color="text-bg-danger" invisible="active"/>
                         <!-- Button box للأزرار الإحصائية -->
+
+
                         <div class="oe_button_box" name="button_box">
                             <button name="action_view_departments"
                                     type="object"

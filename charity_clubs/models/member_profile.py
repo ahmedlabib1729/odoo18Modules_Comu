@@ -46,6 +46,18 @@ class MemberProfile(models.Model):
         help='العمر المحسوب من تاريخ الميلاد'
     )
 
+    # صفة السيدة - الحقل الجديد
+    lady_type = fields.Selection([
+        ('pioneer', 'رائدة'),
+        ('volunteer', 'متطوعة'),
+        ('member', 'عضوة')
+    ], string='صفة السيدة',
+        required=True,
+        default='member',
+        tracking=True,
+        help='اختر صفة السيدة'
+    )
+
     # معلومات التواصل
     mobile = fields.Char(
         string='رقم التواصل',
@@ -63,6 +75,18 @@ class MemberProfile(models.Model):
     email = fields.Char(
         string='البريد الإلكتروني',
         help='البريد الإلكتروني للتواصل'
+    )
+
+    # صفة السيدة
+    lady_type = fields.Selection([
+        ('pioneer', 'رائدة'),
+        ('volunteer', 'متطوعة'),
+        ('member', 'عضوة')
+    ], string='صفة السيدة',
+        required=True,
+        default='member',
+        tracking=True,
+        help='اختر صفة السيدة'
     )
 
     # معلومات إضافية
@@ -204,7 +228,8 @@ class MemberProfile(models.Model):
             else:
                 record.membership_status = 'inactive'
 
-    @api.depends('subscription_ids', 'subscription_ids.state', 'subscription_ids.start_date', 'subscription_ids.end_date')
+    @api.depends('subscription_ids', 'subscription_ids.state', 'subscription_ids.start_date',
+                 'subscription_ids.end_date')
     def _compute_subscription_info(self):
         """حساب معلومات الاشتراك"""
         for record in self:
@@ -347,6 +372,13 @@ class MemberSubscription(models.Model):
         store=True
     )
 
+    # صفة السيدة - حقل مرتبط
+    lady_type = fields.Selection(
+        related='member_id.lady_type',
+        string='صفة السيدة',
+        store=True
+    )
+
     # القسم والمقر
     headquarters_id = fields.Many2one(
         'charity.headquarters',
@@ -479,8 +511,6 @@ class MemberSubscription(models.Model):
         required=True
     )
 
-
-
     @api.model
     def create(self, vals):
         """إنشاء رقم اشتراك تلقائي"""
@@ -601,6 +631,7 @@ class MemberSubscription(models.Model):
                 self.state = 'active'
             else:
                 raise ValidationError('لا يمكن تفعيل الاشتراك قبل دفع الفاتورة!')
+
     def action_cancel(self):
         """إلغاء الاشتراك"""
         self.ensure_one()

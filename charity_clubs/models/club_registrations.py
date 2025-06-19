@@ -200,8 +200,10 @@ class ClubRegistrations(models.Model):
         tracking=True
     )
 
+
     state = fields.Selection([
         ('draft', 'مسودة'),
+        ('pending_review', 'في انتظار المراجعة'),  # حالة جديدة
         ('confirmed', 'مؤكد'),
         ('approved', 'معتمد'),
         ('rejected', 'مرفوض'),
@@ -210,6 +212,20 @@ class ClubRegistrations(models.Model):
         default='draft',
         tracking=True,
         help='حالة التسجيل'
+    )
+
+    # إضافة حقل لتوضيح سبب المراجعة
+    review_reason = fields.Text(
+        string='سبب المراجعة',
+        readonly=True,
+        help='السبب الذي يستدعي مراجعة الإدارة'
+    )
+
+    # إضافة حقل للإشارة إلى وجود مشكلة في رقم الهوية
+    has_id_conflict = fields.Boolean(
+        string='يوجد تعارض في رقم الهوية',
+        default=False,
+        help='يشير إلى وجود طالب آخر بنفس رقم الهوية'
     )
 
     company_id = fields.Many2one(
@@ -785,16 +801,84 @@ class ClubRegistrations(models.Model):
         return self._create_student_and_family()
 
     def _create_student_and_family(self):
-        """إنشاء ملف طالب وعائلة جديد"""
+        """إنشاء ملف طالب وعائلة جديد مع التعامل الذكي مع البيانات الموجودة"""
         self.ensure_one()
 
         if self.registration_type != 'new':
             return {'type': 'ir.actions.do_nothing'}
 
+        # التحقق من وجود طالب بنفس رقم الهوية أولاً
+        existing_student = self.env['charity.student.profile'].search([
+            ('id_number', '=', self.id_number)
+        ], limit=1)
+
+        if existing_student:
+            # الطالب موجود بالفعل - نستخدمه ونحول التسجيل إلى existing
+            self.registration_type = 'existing'
+            self.student_profile_id = existing_student
+
+            # تحديث بيانات الطالب إذا كانت ناقصة
+            student_updates = {}
+            if not existing_student.full_name and self.full_name:
+                student_updates['full_name'] = self.full_name
+            if not existing_student.birth_date and self.birth_date:
+                student_updates['birth_date'] = self.birth_date
+            if not existing_student.gender and self.gender:
+                student_updates['gender'] = self.gender
+            if not existing_student.nationality and self.nationality:
+                student_updates['nationality'] = self.nationality.id
+            if not existing_student.id_front_file and self.id_front_file:
+                student_updates['id_front_file'] = self.id_front_file
+                student_updates['id_front_filename'] = self.id_front_filename
+            if not existing_student.id_back_file and self.id_back_file:
+                student_updates['id_back_file'] = self.id_back_file
+                student_updates['id_back_filename'] = self.id_back_filename
+
+            if student_updates:
+                existing_student.write(student_updates)
+
+            # تحديث بيانات العائلة إذا لزم الأمر
+            if existing_student.family_profile_id:
+                family_profile = existing_student.family_profile_id
+                family_updates = {}
+
+                if not family_profile.father_name and self.father_name:
+                    family_updates['father_name'] = self.father_name
+                if not family_profile.father_mobile and self.father_mobile:
+                    family_updates['father_mobile'] = self.father_mobile
+                if not family_profile.mother_name and self.mother_name:
+                    family_updates['mother_name'] = self.mother_name
+                if not family_profile.mother_mobile and self.mother_mobile:
+                    family_updates['mother_mobile'] = self.mother_mobile
+                if not family_profile.mother_whatsapp and self.mother_whatsapp:
+                    family_updates['mother_whatsapp'] = self.mother_whatsapp
+                if not family_profile.email and self.email:
+                    family_updates['email'] = self.email
+
+                if family_updates:
+                    family_profile.write(family_updates)
+
+            # إضافة رسالة في chatter
+            self.message_post(
+                body=f"تم ربط التسجيل بملف الطالب الموجود: {existing_student.full_name}",
+                subject="ربط بملف طالب موجود"
+            )
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'تم العثور على الطالب',
+                    'message': f'الطالب {existing_student.full_name} موجود بالفعل في النظام وتم ربط التسجيل به',
+                    'type': 'info',
+                    'sticky': False,
+                }
+            }
+
+        # إذا لم يكن الطالب موجوداً، نكمل بإنشاء طالب جديد
         # البحث عن عائلة موجودة أولاً
         existing_family = False
         if self.father_mobile or self.mother_mobile:
-            # البحث بناءً على رقم هاتف الأب أو الأم
             family_domain = []
             if self.father_mobile:
                 family_domain.append(('father_mobile', '=', self.father_mobile))
@@ -807,8 +891,8 @@ class ClubRegistrations(models.Model):
             existing_family = self.env['charity.family.profile'].search(family_domain, limit=1)
 
         if existing_family:
-            # العائلة موجودة - نستخدمها
             family_profile = existing_family
+            message = f'تم استخدام العائلة الموجودة: {existing_family.display_name}'
 
             # تحديث بيانات العائلة إذا كانت ناقصة
             update_vals = {}
@@ -827,8 +911,6 @@ class ClubRegistrations(models.Model):
 
             if update_vals:
                 existing_family.write(update_vals)
-
-            message = f'تم استخدام العائلة الموجودة: {existing_family.display_name}'
         else:
             # إنشاء عائلة جديدة
             family_vals = {
@@ -842,7 +924,7 @@ class ClubRegistrations(models.Model):
             family_profile = self.env['charity.family.profile'].create(family_vals)
             message = f'تم إنشاء عائلة جديدة: {family_profile.display_name}'
 
-        # إنشاء ملف الطالب
+        # إنشاء ملف الطالب الجديد
         student_vals = {
             'full_name': self.full_name,
             'birth_date': self.birth_date,
@@ -900,8 +982,7 @@ class ClubRegistrations(models.Model):
                     raise ValidationError('يجب إدخال أسماء الوالدين!')
                 if not record.mother_mobile or not record.father_mobile:
                     raise ValidationError('يجب إدخال أرقام هواتف الوالدين!')
-                if not record.photo_consent:
-                    raise ValidationError('يجب الموافقة على التصوير!')
+
                 if not record.id_front_file:
                     raise ValidationError('يجب رفع صورة الوجه الأول من الهوية!')
                 if not record.id_back_file:
@@ -941,7 +1022,7 @@ class ClubRegistrations(models.Model):
 
     @api.constrains('term_id', 'student_profile_id')
     def _check_duplicate_registration(self):
-        """منع التسجيل المكرر في نفس الترم"""
+        """منع التسجيل المكرر في نفس الترم فقط"""
         for record in self:
             # للطلاب المسجلين
             if record.registration_type == 'existing' and record.student_profile_id and record.term_id:
@@ -956,19 +1037,43 @@ class ClubRegistrations(models.Model):
                         f'الطالب {record.student_profile_id.full_name} مسجل بالفعل في {record.term_id.name}!'
                     )
 
-            # للطلاب الجدد - التحقق برقم الهوية
+            # للطلاب الجدد - التحقق برقم الهوية في نفس الترم فقط
             elif record.registration_type == 'new' and record.id_number and record.term_id:
-                duplicate = self.search([
-                    ('id_number', '=', record.id_number),
-                    ('term_id', '=', record.term_id.id),
-                    ('id', '!=', record.id),
-                    ('state', '!=', 'cancelled')
+                # نبحث عن طالب موجود بنفس رقم الهوية
+                existing_student = self.env['charity.student.profile'].search([
+                    ('id_number', '=', record.id_number)
                 ], limit=1)
-                if duplicate:
-                    raise ValidationError(
-                        f'يوجد تسجيل سابق لنفس رقم الهوية في {record.term_id.name}!'
-                    )
 
+                if existing_student:
+                    # إذا وجد طالب بنفس رقم الهوية، نتحقق من التسجيلات في نفس الترم فقط
+                    duplicate = self.search([
+                        '|',
+                        ('student_profile_id', '=', existing_student.id),
+                        ('id_number', '=', record.id_number),
+                        ('term_id', '=', record.term_id.id),
+                        ('id', '!=', record.id),
+                        ('state', '!=', 'cancelled')
+                    ], limit=1)
+
+                    if duplicate:
+                        raise ValidationError(
+                            f'يوجد تسجيل سابق لنفس رقم الهوية في {record.term_id.name}!\n'
+                            f'الطالب {existing_student.full_name} مسجل بالفعل في هذا الترم.'
+                        )
+                else:
+                    # إذا لم يوجد طالب، نتحقق من التسجيلات الأخرى بنفس رقم الهوية في نفس الترم
+                    duplicate = self.search([
+                        ('id_number', '=', record.id_number),
+                        ('term_id', '=', record.term_id.id),
+                        ('id', '!=', record.id),
+                        ('state', '!=', 'cancelled'),
+                        ('registration_type', '=', 'new')  # فقط التسجيلات الجديدة
+                    ], limit=1)
+
+                    if duplicate:
+                        raise ValidationError(
+                            f'يوجد تسجيل آخر قيد المعالجة لنفس رقم الهوية في {record.term_id.name}!'
+                        )
     @api.constrains('birth_date')
     def _check_birth_date(self):
         """التحقق من صحة تاريخ الميلاد"""
@@ -1124,7 +1229,7 @@ class ClubRegistrations(models.Model):
         self.ensure_one()
 
         if self.invoice_id:
-            return False
+            return self.invoice_id
 
         # التأكد من وجود الاسم
         student_name = self.full_name
@@ -1197,8 +1302,7 @@ class ClubRegistrations(models.Model):
         invoice = self.env['account.move'].create(invoice_vals)
         self.invoice_id = invoice
 
-        # تأكيد الفاتورة تلقائياً
-        invoice.action_post()
+        # عدم ترحيل الفاتورة هنا - سيتم ترحيلها في action_confirm حسب الحالة
 
         # إضافة رسالة في الـ chatter
         discount_msg = ""
@@ -1219,20 +1323,121 @@ class ClubRegistrations(models.Model):
         return invoice
 
     def action_confirm(self):
-        """تأكيد التسجيل"""
+        """تأكيد التسجيل مع التحقق من تكرار رقم الهوية"""
         self.ensure_one()
         if self.state == 'draft':
             # التحقق من الحقول المطلوبة
             self._validate_required_fields()
 
+            # متغير لتحديد إذا كان يحتاج مراجعة
+            needs_review = False
+            review_reasons = []
+
             # إنشاء ملف الطالب إذا كان تسجيل جديد
             if self.registration_type == 'new' and not self.student_profile_id:
-                self._create_student_and_family()
+                # التحقق من وجود طالب بنفس رقم الهوية
+                existing_student = self.env['charity.student.profile'].search([
+                    ('id_number', '=', self.id_number)
+                ], limit=1)
 
-            # إنشاء الفاتورة
-            self._create_invoice()
+                if existing_student:
+                    # مقارنة الأسماء
+                    if existing_student.full_name.strip().lower() == self.full_name.strip().lower():
+                        # نفس الطالب - نستخدم الملف الموجود
+                        self.registration_type = 'existing'
+                        self.student_profile_id = existing_student
+
+                        self.message_post(
+                            body=f"تم ربط التسجيل بملف الطالب الموجود: {existing_student.full_name}",
+                            subject="ربط بملف طالب موجود"
+                        )
+                    else:
+                        # اسم مختلف - يحتاج مراجعة الإدارة
+                        needs_review = True
+                        self.has_id_conflict = True
+                        review_reasons.append(
+                            f"رقم الهوية {self.id_number} مسجل بالفعل للطالب: {existing_student.full_name}\n"
+                            f"الاسم المدخل: {self.full_name}"
+                        )
+
+                        self.message_post(
+                            body=f"""<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px;">
+                                <strong>⚠️ تنبيه: يحتاج مراجعة الإدارة</strong><br/>
+                                رقم الهوية {self.id_number} مسجل بالفعل للطالب {existing_student.full_name}<br/>
+                                الاسم المدخل في هذا التسجيل: {self.full_name}<br/>
+                                <br/>
+                                <strong>الإجراءات المطلوبة:</strong>
+                                <ul>
+                                    <li>التواصل مع ولي الأمر للتحقق من البيانات</li>
+                                    <li>تحديد إذا كان خطأ في الإدخال أم طالب جديد</li>
+                                    <li>اتخاذ القرار المناسب (تعديل البيانات أو إنشاء ملف جديد)</li>
+                                </ul>
+                            </div>""",
+                            subject="تعارض في رقم الهوية - يحتاج مراجعة",
+                            message_type='notification'
+                        )
+                else:
+                    # لا يوجد طالب بنفس رقم الهوية - ننشئ ملف جديد
+                    self._create_student_and_family()
+
+            # إنشاء الفاتورة دائماً
+            invoice = self._create_invoice()
+
+            # تحديد الحالة النهائية
+            if needs_review:
+                self.state = 'pending_review'
+                self.review_reason = '\n'.join(review_reasons)
+
+            else:
+                # التأكيد العادي
+                self.state = 'confirmed'
+
+                # ترحيل الفاتورة
+                if self.invoice_id and self.invoice_id.state == 'draft':
+                    self.invoice_id.action_post()
+                    self.message_post(
+                        body=f"تم ترحيل الفاتورة {self.invoice_id.name}",
+                        subject="ترحيل الفاتورة"
+                    )
+
+    def action_confirm_after_review(self):
+        """تأكيد التسجيل بعد المراجعة من الإدارة"""
+        self.ensure_one()
+        if self.state == 'pending_review':
+            # إنشاء ملف طالب إذا قررت الإدارة ذلك
+            if self.registration_type == 'new' and not self.student_profile_id:
+                # يمكن للإدارة اختيار:
+                # 1. إنشاء ملف طالب جديد
+                # 2. ربط بملف موجود
+                # 3. تعديل البيانات
+                pass
 
             self.state = 'confirmed'
+            self.has_id_conflict = False
+
+            # ترحيل الفاتورة إذا كانت موجودة
+            if self.invoice_id and self.invoice_id.state == 'draft':
+                self.invoice_id.action_post()
+
+            self.message_post(
+                body="تم تأكيد التسجيل بعد المراجعة",
+                subject="تأكيد بعد المراجعة"
+            )
+
+    def action_reject_after_review(self):
+        """رفض التسجيل بعد المراجعة"""
+        self.ensure_one()
+        if self.state == 'pending_review':
+            self.state = 'rejected'
+
+            # إلغاء الفاتورة إذا كانت موجودة
+            if self.invoice_id and self.invoice_id.state == 'draft':
+                self.invoice_id.button_cancel()
+
+            self.message_post(
+                body="تم رفض التسجيل بعد المراجعة",
+                subject="رفض بعد المراجعة"
+            )
 
     def action_approve(self):
         """اعتماد التسجيل"""

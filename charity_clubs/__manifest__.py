@@ -29,6 +29,7 @@
         'views/club_registration_views.xml',
         'views/member_views.xml',
         'views/booking_registration_views.xml',
+        'views/wizard_review_registration_views.xml',
         'views/headquarters_menu.xml', # القوائم في النهاية
 
 

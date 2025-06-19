@@ -365,7 +365,7 @@ class CharityClubTerms(models.Model):
     available_seats = fields.Integer(
         string='المقاعد المتاحة',
         compute='_compute_available_seats',
-        store=True,
+       # store=True,
         help='عدد المقاعد المتاحة للتسجيل'
     )
 
@@ -389,11 +389,16 @@ class CharityClubTerms(models.Model):
                 ('state', '!=', 'cancelled')
             ])
 
-    @api.depends('registrations_count', 'max_capacity')
     def _compute_available_seats(self):
         """حساب المقاعد المتاحة"""
+        ClubRegistrations = self.env['charity.club.registrations']
         for record in self:
-            record.available_seats = record.max_capacity - record.registrations_count
+            # حساب عدد المسجلين مباشرة
+            registrations_count = ClubRegistrations.search_count([
+                ('term_id', '=', record.id),
+                ('state', 'not in', ['cancelled', 'rejected', 'draft'])  # تأكد من الحالات الصحيحة
+            ])
+            record.available_seats = record.max_capacity - registrations_count
 
     @api.depends('date_from', 'date_to')
     def _compute_state(self):
