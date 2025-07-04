@@ -1,0 +1,22 @@
+{
+    'name': 'Club Management',
+    'version': '1.0',
+    'summary': 'Manage club members and registrations',
+    'category': 'Membership',
+    'author': 'Your Name',
+    'website': 'https://yourwebsite.com',
+    'depends': ['base', 'website'],
+    'data': [
+        'security/ir.model.access.csv',
+        'data/sequence_data.xml',
+        'views/club_member_views.xml',
+        'views/membership_plan_views.xml',
+        'views/club_member_menu.xml',
+        'views/templates.xml',
+        'views/sport_type_views.xml',
+'views/plans_template.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

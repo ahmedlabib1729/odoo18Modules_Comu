@@ -1,0 +1,279 @@
+<odoo>
+<template id="register_template">
+  <t t-call="website.layout">
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow">
+            <!-- Header -->
+            <div class="card-header text-center p-4 bg-primary text-white">
+              <h2 class="mb-0">Sports Club Membership</h2>
+              <p class="mb-0">Join our club and enjoy exclusive facilities</p>
+            </div>
+
+            <div class="card-body p-4">
+              <!-- عرض رسالة الخطأ -->
+              <div t-if="error" class="alert alert-danger mb-4">
+                <i class="fa fa-exclamation-triangle me-2"></i> <t t-esc="error"/>
+              </div>
+
+              <form action="/club/register/submit" method="post" class="js_website_form">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                <!-- Sports Selection -->
+                <div class="mb-4">
+                  <h4 class="mb-3 text-primary border-bottom pb-2">Choose Your Sports</h4>
+                  <p>Select one or more sports you are interested in:</p>
+
+                  <div class="row">
+                    <t t-foreach="sports" t-as="sport">
+                      <div class="col-md-4 mb-3">
+                        <div class="card h-100 sport-card">
+                          <div class="card-body">
+                            <div class="form-check">
+                              <input type="checkbox" class="form-check-input"
+                                     name="sport_type_ids" t-att-value="sport.id"
+                                     t-att-id="'sport_' + str(sport.id)" />
+                              <label class="form-check-label" t-att-for="'sport_' + str(sport.id)">
+                                <h5 t-esc="sport.name" class="mb-1"/>
+                                <p class="text-muted small" t-if="sport.description" t-esc="sport.description"/>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </t>
+                  </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="mb-4">
+                  <h4 class="mb-3 text-primary border-bottom pb-2">Personal Information</h4>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="name">Full Name</label>
+                      <input name="name" type="text" class="form-control" required="1"/>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="email">Email Address</label>
+                      <input name="email" type="email" class="form-control" required="1"/>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="identity_no">Passport/ID Number</label>
+                      <input name="identity_no" type="text" class="form-control" required="1"/>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="date_of_birth">Date of Birth</label>
+                      <input name="date_of_birth" type="date" class="form-control" required="1"/>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="nationality_id">Nationality</label>
+                    <select name="nationality_id" class="form-select" required="1">
+                      <option value="">Select your nationality</option>
+                      <t t-foreach="countries" t-as="country">
+                        <option t-att-value="country.id" t-esc="country.name"/>
+                      </t>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Membership info (just a note) -->
+                <div class="mb-4">
+                  <div class="alert alert-success">
+                    <p class="mb-0">
+                      <i class="fa fa-info-circle me-2"></i>
+                      Your membership will be processed based on your selected sports.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Agreement -->
+                <div class="mb-4">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="terms" required="1"/>
+                    <label class="form-check-label" for="terms">
+                      I agree to the club's membership terms and conditions
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary btn-lg px-4">
+                    Complete Registration
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .sport-card {
+        transition: all 0.2s ease;
+        border: 1px solid #dee2e6;
+      }
+      .sport-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
+      .form-check-input:checked + label .sport-card {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+      }
+    </style>
+
+    <script>
+      $(document).ready(function() {
+        // جعل البطاقة بأكملها قابلة للنقر
+        $('.sport-card').click(function() {
+          var checkbox = $(this).find('input[type="checkbox"]');
+          checkbox.prop('checked', !checkbox.prop('checked'));
+        });
+
+        // منع الضغط على الصندوق من تشغيل النقر على البطاقة
+        $('.form-check-input').click(function(e) {
+          e.stopPropagation();
+        });
+      });
+    </script>
+  </t>
+</template>
+<template id="thanks_template">
+  <t t-call="website.layout">
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card border-0 shadow rounded-lg overflow-hidden">
+            <div class="card-header p-0">
+              <div class="bg-gradient-primary text-white text-center p-4"
+                   style="background: linear-gradient(45deg, #2b5876, #4e4376);">
+                <div class="position-relative">
+                  <div class="success-animation mb-3">
+                    <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" width="70" height="70">
+                      <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" stroke-width="2" stroke="#fff"/>
+                      <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" stroke="#fff" stroke-width="3"/>
+                    </svg>
+                  </div>
+                  <h2 class="mb-0">Registration Successful!</h2>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-body p-4">
+              <div class="text-center mb-4">
+                <div class="membership-id py-2 px-4 mb-3 d-inline-block border-dashed">
+                  <div class="small text-muted mb-1">MEMBERSHIP REQUEST ID</div>
+                  <div class="h3 text-primary fw-bold" t-field="member.reference"></div>
+                </div>
+                <h3 class="text-secondary">Thank You for Your Registration!</h3>
+                <p class="lead">Your membership request has been successfully submitted and is pending approval.</p>
+              </div>
+
+              <div class="alert alert-info border-0 bg-light p-4 mb-4 position-relative">
+                <div class="row align-items-center">
+                  <div class="col-auto pe-0">
+                    <div class="bg-info text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                      <i class="fa fa-info-circle fa-lg"></i>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <h5 class="mb-1">What's Next?</h5>
+                    <p class="mb-0">Our team will review your application. You can track your membership status using your ID number. We'll also notify you by email once your membership is approved.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row gx-3 mb-4 text-center">
+                <div class="col-md-6 mb-3">
+                  <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-4">
+                      <div class="icon-wrapper mb-3">
+                        <i class="fa fa-envelope fa-2x text-secondary"></i>
+                      </div>
+                      <h5 class="card-title">Check Your Email</h5>
+                      <p class="card-text small text-muted">We've sent the details to your registered email.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="card h-100 border-0 bg-light">
+                    <div class="card-body py-4">
+                      <div class="icon-wrapper mb-3">
+                        <i class="fa fa-id-card fa-2x text-secondary"></i>
+                      </div>
+                      <h5 class="card-title">Save Your ID</h5>
+                      <p class="card-text small text-muted">Keep your membership ID for future reference.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-center">
+                <a href="/" class="btn btn-primary px-5 py-2 rounded-pill">
+                  <i class="fa fa-home me-2"></i> Return to Homepage
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .border-dashed {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+      }
+
+      .success-animation {
+        margin: 0 auto;
+        display: inline-block;
+      }
+
+      .checkmark__circle {
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+        animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+      }
+
+      .checkmark__check {
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+      }
+
+      @keyframes stroke {
+        100% {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .bg-gradient-primary {
+        background: linear-gradient(45deg, #2b5876, #4e4376);
+      }
+
+      .icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: rgba(0, 123, 255, 0.1);
+      }
+    </style>
+  </t>
+</template>
+
+</odoo>

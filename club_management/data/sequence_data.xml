@@ -1,0 +1,19 @@
+<odoo>
+  <data noupdate="1">
+    <record id="seq_club_member_ref" model="ir.sequence">
+      <field name="name">Club Member Reference</field>
+      <field name="code">club.member</field>
+      <field name="prefix">CLUB-</field>
+      <field name="padding">5</field>
+      <field name="number_increment">1</field>
+    </record>
+
+    <record id="seq_membership_plan" model="ir.sequence">
+      <field name="name">Membership Plan Sequence</field>
+      <field name="code">membership.plan</field>
+      <field name="prefix">PLAN-</field>
+      <field name="padding">4</field>
+      <field name="number_increment">1</field>
+    </record>
+  </data>
+</odoo>

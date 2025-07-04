@@ -1,0 +1,178 @@
+<odoo>
+<template id="plans_template">
+  <t t-call="website.layout">
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow">
+            <!-- Header -->
+            <div class="card-header text-center p-4 bg-primary text-white">
+              <h2 class="mb-0">Select Membership Plans</h2>
+              <p class="mb-0">Choose the plans that suit your needs</p>
+            </div>
+
+            <div class="card-body p-4">
+              <!-- عرض رسالة الخطأ -->
+              <div t-if="error" class="alert alert-danger mb-4">
+                <i class="fa fa-exclamation-triangle me-2"></i> <t t-esc="error"/>
+              </div>
+
+              <div class="mb-4">
+                <div class="progress">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: 66%;" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100">Step 2 of 3</div>
+                </div>
+              </div>
+
+              <form action="/club/register/plans/submit" method="post" class="js_website_form">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                <div class="mb-4">
+                  <h4 class="mb-3 text-success">
+                    <i class="fa fa-check-circle me-2"></i>Sports Selected
+                  </h4>
+                  <div class="mb-3">
+                    <t t-foreach="sports" t-as="sport">
+                      <span class="badge bg-primary me-2 mb-2" t-esc="sport.name"/>
+                    </t>
+                  </div>
+                </div>
+
+                <!-- للتشخيص: طباعة بيانات الألعاب والخطط -->
+                <t t-if="request.env.user.has_group('base.group_system')">
+                  <div class="alert alert-info small">
+                    <p>Debug info:</p>
+                    <ul>
+                      <li>Sports count: <t t-esc="len(sports)"/></li>
+                      <t t-foreach="sports" t-as="sport">
+                        <li>
+                          Sport: <t t-esc="sport.name"/> (ID: <t t-esc="sport.id"/>)
+                          <br/>Plans: <t t-esc="len(plans_by_sport.get(sport.id, []))"/> plans
+                        </li>
+                      </t>
+                    </ul>
+                  </div>
+                </t>
+
+<div class="mb-4">
+  <h4 class="mb-3 text-primary border-bottom pb-2">
+    <i class="fa fa-star me-2"></i>Available Membership Plans
+  </h4>
+  <p>Please select at least one membership plan for your selected sports:</p>
+
+  <!-- طباعة جميع الألعاب المختارة للتحقق -->
+  <div class="alert alert-info small" t-if="request.env.user.has_group('base.group_system')">
+    <strong>Debug:</strong>
+    <ul>
+      <li>Sports count: <t t-esc="len(sports)"/></li>
+      <t t-foreach="sports" t-as="sport">
+        <li>Sport: <t t-esc="sport.name"/> (ID: <t t-esc="sport.id"/>)</li>
+      </t>
+      <li>Keys in plans_by_sport: <t t-esc="str(list(plans_by_sport.keys()))"/></li>
+    </ul>
+  </div>
+
+  <!-- لكل لعبة مختارة، عرض الخطط المتاحة -->
+  <t t-foreach="sports" t-as="sport">
+    <div class="mb-4">
+      <h5 class="mb-3">
+        <span class="badge bg-primary me-2" t-esc="sport.name"/>Plans
+      </h5>
+
+      <div class="row">
+        <!-- التحقق إذا كان مفتاح اللعبة موجود في القاموس -->
+        <t t-if="sport.id in plans_by_sport">
+          <!-- التحقق من وجود خطط لهذه اللعبة -->
+          <t t-if="plans_by_sport[sport.id]">
+            <t t-foreach="plans_by_sport[sport.id]" t-as="plan">
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 plan-card">
+                  <div class="card-header bg-light">
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input"
+                             name="plan_ids" t-att-value="plan.id"
+                             t-att-id="'plan_' + str(plan.id)" />
+                      <label class="form-check-label" t-att-for="'plan_' + str(plan.id)">
+                        <span t-esc="plan.name"/>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="badge bg-primary" t-esc="str(plan.duration_months) + ' Months'"/>
+                      <span class="h5 mb-0" t-esc="str(plan.price) + ' ' + plan.currency_id.symbol"/>
+                    </div>
+                    <p class="card-text small text-muted" t-esc="plan.features or ''"/>
+                  </div>
+                </div>
+              </div>
+            </t>
+          </t>
+          <t t-else="">
+            <div class="col-12">
+              <div class="alert alert-warning">
+                <p class="mb-0">No membership plans available for <strong t-esc="sport.name"/>. Please contact the club for more information.</p>
+              </div>
+            </div>
+          </t>
+        </t>
+        <t t-else="">
+          <div class="col-12">
+            <div class="alert alert-warning">
+              <p class="mb-0">No membership plans found for <strong t-esc="sport.name"/> (ID: <t t-esc="sport.id"/>). Please check the configuration.</p>
+            </div>
+          </div>
+        </t>
+      </div>
+    </div>
+  </t>
+</div>
+
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-between">
+                  <a href="/club/register" class="btn btn-outline-primary">
+                    <i class="fa fa-arrow-left me-2"></i>Back
+                  </a>
+                  <button type="submit" class="btn btn-success btn-lg px-4">
+                    <i class="fa fa-check-circle me-2"></i>Complete Registration
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .plan-card {
+        transition: all 0.2s ease;
+        border: 1px solid #dee2e6;
+        cursor: pointer;
+      }
+      .plan-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
+      .form-check-input:checked + label {
+        font-weight: bold;
+        color: #0d6efd;
+      }
+    </style>
+
+    <script>
+      $(document).ready(function() {
+        // جعل البطاقة بأكملها قابلة للنقر
+        $('.plan-card').click(function() {
+          var checkbox = $(this).find('input[type="checkbox"]');
+          checkbox.prop('checked', !checkbox.prop('checked'));
+        });
+
+        // منع الضغط على الصندوق من تشغيل النقر على البطاقة
+        $('.form-check-input').click(function(e) {
+          e.stopPropagation();
+        });
+      });
+    </script>
+  </t>
+</template>
+</odoo>

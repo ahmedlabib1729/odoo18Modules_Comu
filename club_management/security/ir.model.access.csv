@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_club_member_user,club.member.user,model_club_member,base.group_user,1,1,1,1
+access_membership_plan_user,membership.plan.user,model_membership_plan,base.group_user,1,1,1,1
+access_club_member_public,club.member.public,model_club_member,base.group_public,1,0,0,0
+access_membership_plan_public,membership.plan.public,model_membership_plan,base.group_public,1,0,0,0
+access_sports_type_user,sports.type.user,model_sports_type,base.group_user,1,1,1,1
+access_sports_type_public,sports.type.public,model_sports_type,base.group_public,1,0,0,0

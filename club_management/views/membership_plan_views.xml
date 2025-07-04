@@ -1,0 +1,74 @@
+<odoo>
+  <!-- Tree view -->
+  <record id="view_membership_plan_tree" model="ir.ui.view">
+    <field name="name">membership.plan.tree</field>
+    <field name="model">membership.plan</field>
+    <field name="arch" type="xml">
+      <list string="Membership Plans">
+        <field name="sequence"/>
+        <field name="name"/>
+        <field name="sport_type_id"/>
+        <field name="duration_months"/>
+        <field name="price"/>
+        <field name="currency_id" invisible="1"/>
+        <field name="auto_renew"/>
+        <field name="active" widget="boolean_toggle"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Form view -->
+  <record id="view_membership_plan_form" model="ir.ui.view">
+    <field name="name">membership.plan.form</field>
+    <field name="model">membership.plan</field>
+    <field name="arch" type="xml">
+      <form string="Membership Plan">
+        <sheet>
+          <div class="oe_title">
+            <h1>
+              <field name="sequence" readonly="1"/>
+            </h1>
+          </div>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="sport_type_id"/>
+              <field name="duration_months"/>
+            </group>
+            <group>
+              <field name="price"/>
+              <field name="currency_id" invisible="1"/>
+              <field name="auto_renew"/>
+              <field name="active"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Features">
+              <field name="features" placeholder="Describe what this plan includes..."/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Search view -->
+  <record id="view_membership_plan_search" model="ir.ui.view">
+    <field name="name">membership.plan.search</field>
+    <field name="model">membership.plan</field>
+    <field name="arch" type="xml">
+      <search string="Membership Plans">
+        <field name="name"/>
+        <field name="sequence"/>
+        <field name="sport_type_id"/>
+        <separator/>
+        <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+        <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+        <group expand="0" string="Group By">
+          <filter string="Sport Type" name="group_by_sport" domain="[]" context="{'group_by': 'sport_type_id'}"/>
+          <filter string="Duration" name="group_by_duration" domain="[]" context="{'group_by': 'duration_months'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+</odoo>

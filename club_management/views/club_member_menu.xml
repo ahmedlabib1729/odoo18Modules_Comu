@@ -1,0 +1,62 @@
+<odoo>
+  <!-- Actions -->
+  <record id="action_club_member" model="ir.actions.act_window">
+    <field name="name">Members</field>
+    <field name="res_model">club.member</field>
+    <field name="view_mode">list,form</field>
+    <field name="context">{'search_default_active': 1}</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Create your first member
+      </p>
+    </field>
+  </record>
+
+  <!-- Action for Membership Plans -->
+  <record id="action_membership_plan" model="ir.actions.act_window">
+    <field name="name">Membership Plans</field>
+    <field name="res_model">membership.plan</field>
+    <field name="view_mode">list,form</field>
+    <field name="context">{'search_default_active': 1}</field>
+  </record>
+
+  <!-- Action for Sports Types -->
+  <record id="action_sport_type" model="ir.actions.act_window">
+    <field name="name">Sports Types</field>
+    <field name="res_model">sports.type</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <!-- Root menu -->
+  <menuitem id="menu_club_management_root"
+            name="Club Management"
+            web_icon="club_management,static/description/icon.png"
+            sequence="10"/>
+
+  <!-- Members menu under root -->
+  <menuitem id="menu_club_members"
+            name="Members"
+            parent="menu_club_management_root"
+            action="action_club_member"
+            sequence="1"/>
+
+  <!-- Membership Plans under root -->
+  <menuitem id="menu_membership_plans"
+            name="Membership Plans"
+            parent="menu_club_management_root"
+            action="action_membership_plan"
+            sequence="2"/>
+
+  <!-- Configuration menu -->
+  <menuitem id="menu_club_configuration"
+            name="Configuration"
+            parent="menu_club_management_root"
+            sequence="99"/>
+
+  <!-- Sports Types menu under Configuration -->
+  <menuitem id="menu_sport_types"
+            name="Sports Types"
+            parent="menu_club_configuration"
+            action="action_sport_type"
+            sequence="10"/>
+</odoo>

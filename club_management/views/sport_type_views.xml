@@ -1,0 +1,69 @@
+<odoo>
+  <!-- Tree View -->
+  <record id="view_sport_type_tree" model="ir.ui.view">
+    <field name="name">sports.type.tree</field>
+    <field name="model">sports.type</field>
+    <field name="arch" type="xml">
+      <list string="Sports Types">
+        <field name="name"/>
+        <field name="code"/>
+        <field name="membership_plan_count"/>
+        <field name="active" widget="boolean_toggle"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Form View -->
+  <record id="view_sport_type_form" model="ir.ui.view">
+    <field name="name">sports.type.form</field>
+    <field name="model">sports.type</field>
+    <field name="arch" type="xml">
+      <form string="Sport Type">
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="%(action_membership_plan)d"
+                    type="action"
+                    class="oe_stat_button"
+                    icon="fa-list"
+                    domain="[('sport_type_id', '=', id)]"
+                    context="{'default_sport_type_id': id}">
+              <field name="membership_plan_count" string="Plans" widget="statinfo"/>
+            </button>
+          </div>
+          <div class="oe_title">
+            <h1><field name="name" placeholder="Sport Name"/></h1>
+          </div>
+          <group>
+            <group>
+              <field name="code"/>
+              <field name="active"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Description">
+              <field name="description" placeholder="Describe this sport..."/>
+            </page>
+            <page string="Membership Plans">
+              <field name="membership_plan_ids" context="{'default_sport_type_id': id}">
+                <list>
+                  <field name="sequence"/>
+                  <field name="name"/>
+                  <field name="duration_months"/>
+                  <field name="price"/>
+                  <field name="currency_id" invisible="1"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action -->
+  <record id="action_sport_type" model="ir.actions.act_window">
+    <field name="name">Sports Types</field>
+    <field name="res_model">sports.type</field>
+    <field name="view_mode">list,form</field>
+  </record>
+</odoo>
